@@ -1,0 +1,5 @@
+terraform/.terraform*
+.DS_Store
+cover.out
+coverage.html
+simplechat

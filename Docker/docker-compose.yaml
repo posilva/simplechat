@@ -1,0 +1,32 @@
+version: '3.7'
+services:
+
+  localstack:
+    container_name: "${LOCALSTACK_DOCKER_NAME-localstack_main}"
+    restart: "on-failure"
+    image: localstack/localstack:2.0.1 
+    ports:
+      - "127.0.0.1:4566:4566"            # LocalStack Gateway
+      - "127.0.0.1:4510-4559:4510-4559"  # external services port range
+    environment:
+      - PERSISTENCE=1
+      - DEBUG=${DEBUG-}
+      - LAMBDA_EXECUTOR=${LAMBDA_EXECUTOR-}
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - "./init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh"
+      - "${LOCALSTACK_VOLUME_DIR:-./localstack_volume}:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+##############################################################################
+
+  redis:
+    container_name: "${REDIS_DOCKER_NAME-localredis}"
+    restart: "on-failure"
+    image: redis:7.0.10-alpine3.17
+    ports:
+      - "0.0.0.0:6379:6379"
+    volumes:
+      - "${REDIS_VOLUME_DIR:-./localredis_volume}:/data"
+      
+
+
