@@ -1,2 +1,3 @@
 localstack_volume/
 localredis_volume/
+rabbitmq_volume/

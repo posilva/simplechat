@@ -1,4 +1,4 @@
-version: '3.7'
+version: '3.8'
 services:
 
   localstack:
@@ -18,7 +18,20 @@ services:
       - "${LOCALSTACK_VOLUME_DIR:-./localstack_volume}:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
 ##############################################################################
-
+  rabbitmq:
+    container_name: "${RMQ_DOCKER_NAME-localrabbitmq}"
+    image: rabbitmq:3.11.13-management-alpine
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    restart: "on-failure"
+    ports:
+      - "0.0.0.0:5672:5672"
+      - "0.0.0.0:5671:5671"
+      - "0.0.0.0:15672:15672"
+    volumes:
+      - ./sslcert:/cert/rabbitmq:ro   
+      - ./conf/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
   redis:
     container_name: "${REDIS_DOCKER_NAME-localredis}"
     restart: "on-failure"
@@ -27,6 +40,3 @@ services:
       - "0.0.0.0:6379:6379"
     volumes:
       - "${REDIS_VOLUME_DIR:-./localredis_volume}:/data"
-      
-
-

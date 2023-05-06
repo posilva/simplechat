@@ -24,12 +24,18 @@ type Repository interface {
 // Notifier defines the interface to handle with
 // the notifications of the chat messages
 type Notifier interface {
+	Registry
 	Broadcast(m domain.ModeratedMessage) error
-	Register()
 }
 
 // Moderator defines the interface to handle with
 // the moderation of the chat messages
 type Moderator interface {
 	Check(m domain.Message) (*domain.ModeratedMessage, error)
+}
+
+// Registry defines the interface of a EndPoint registry
+type Registry interface {
+	Register(id string, topic string) error
+	DeRegister(id string) error
 }
