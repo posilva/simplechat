@@ -6,6 +6,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.17.7
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.19.2
 	github.com/rabbitmq/amqp091-go v1.8.1
+	github.com/segmentio/ksuid v1.0.4
 	github.com/stretchr/testify v1.8.0
 )
 

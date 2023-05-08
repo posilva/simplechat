@@ -36,6 +36,11 @@ type Moderator interface {
 
 // Registry defines the interface of a EndPoint registry
 type Registry interface {
-	Register(id string, topic string) error
+	Register(id string, topic string, r Receiver) error
 	DeRegister(id string) error
+}
+
+type Receiver interface {
+	Receive(m domain.ModeratedMessage)
+	Recover()
 }
