@@ -11,14 +11,14 @@ import (
 // ChatService defines the actions that a chat service provides
 type ChatService interface {
 	Send(domain.Message) error
-	History(since time.Duration) ([]*domain.ModeratedMessage, error)
+	History(dst string, since time.Duration) ([]*domain.ModeratedMessage, error)
 }
 
 // Repository defines the interface to handle with
 // with the storage layer of the chat messages
 type Repository interface {
 	Store(m domain.ModeratedMessage) error
-	Fetch(since time.Duration) ([]*domain.ModeratedMessage, error)
+	Fetch(key string, since time.Duration) ([]*domain.ModeratedMessage, error)
 }
 
 // Notifier defines the interface to handle with

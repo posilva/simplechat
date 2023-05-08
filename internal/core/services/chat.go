@@ -42,6 +42,6 @@ func (c *ChatService) Send(m domain.Message) error {
 	return nil
 }
 
-func (c *ChatService) History(since time.Duration) ([]*domain.ModeratedMessage, error) {
-	return c.repository.Fetch(since)
+func (c *ChatService) History(dest string, since time.Duration) ([]*domain.ModeratedMessage, error) {
+	return c.repository.Fetch(dest, since)
 }

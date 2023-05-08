@@ -69,6 +69,7 @@ func TestChatService_History(t *testing.T) {
 		moderator  ports.Moderator
 	}
 	type args struct {
+		dst   string
 		since time.Duration
 	}
 	tests := []struct {
@@ -87,7 +88,7 @@ func TestChatService_History(t *testing.T) {
 				notifier:   tt.fields.notifier,
 				moderator:  tt.fields.moderator,
 			}
-			got, err := c.History(tt.args.since)
+			got, err := c.History(tt.args.dst, tt.args.since)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ChatService.History() error = %v, wantErr %v", err, tt.wantErr)
 				return
