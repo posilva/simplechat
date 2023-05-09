@@ -1,101 +1,123 @@
 package services
 
 import (
-	"reflect"
 	"testing"
 	"time"
 
+	"github.com/posilva/simplechat/internal/adapters/output/moderator"
+	"github.com/posilva/simplechat/internal/adapters/output/notifier"
+	"github.com/posilva/simplechat/internal/adapters/output/repository"
 	"github.com/posilva/simplechat/internal/core/domain"
-	"github.com/posilva/simplechat/internal/core/ports"
+	uuid "github.com/segmentio/ksuid"
+	"github.com/stretchr/testify/assert"
 )
 
+const (
+	// TODO make a public constant
+	localTableName string = "local-dev-dev-simplechat"
+	localURL       string = "amqp://guest:guest@localhost:5672/"
+)
+
+// TODO: come up with something to share helpers for tests
+type testReceiver struct {
+	ch chan domain.ModeratedMessage
+	f  func()
+}
+
+func newTestReceiver(ch chan domain.ModeratedMessage, f func()) *testReceiver {
+	return &testReceiver{
+		ch,
+		f,
+	}
+}
+func (r *testReceiver) Receive(m domain.ModeratedMessage) {
+	r.f()
+	r.ch <- m
+}
+func (r *testReceiver) Recover() {
+	close(r.ch)
+}
 func TestNewChatService(t *testing.T) {
-	type args struct {
-		r ports.Repository
-		n ports.Notifier
-		m ports.Moderator
-	}
-	tests := []struct {
-		name string
-		args args
-		want *ChatService
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := NewChatService(tt.args.r, tt.args.n, tt.args.m); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewChatService() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+	expType := &ChatService{}
+
+	r, err := repository.NewDynamoDBRepository(repository.DefaultiLocalAWSClientConfig(), localTableName)
+	assert.NoError(t, err)
+
+	n, err := notifier.NewRabbitMQNotifierWithLocal(localURL)
+	assert.NoError(t, err)
+
+	m := moderator.NewIgnoreModerator()
+	cs := NewChatService(r, n, m)
+
+	assert.NotNil(t, cs)
+	assert.IsType(t, expType, cs)
 }
 
 func TestChatService_Send(t *testing.T) {
-	type fields struct {
-		repository ports.Repository
-		notifier   ports.Notifier
-		moderator  ports.Moderator
+	r, err := repository.NewDynamoDBRepository(repository.DefaultiLocalAWSClientConfig(), localTableName)
+	assert.NoError(t, err)
+
+	n, err := notifier.NewRabbitMQNotifierWithLocal(localURL)
+	assert.NoError(t, err)
+
+	m := moderator.NewIgnoreModerator()
+	cs := NewChatService(r, n, m)
+
+	assert.NotNil(t, cs)
+
+	topic := "TestChatService_Send" + "_" + uuid.New().String()
+	payload := "TestChatService_Send Message"
+
+	c := make(chan domain.ModeratedMessage, 1)
+	rc := newTestReceiver(c, func() {})
+
+	id1 := uuid.New().String()
+	err = n.Register(id1, topic, rc)
+	assert.NoError(t, err)
+
+	id2 := uuid.New().String()
+	err = n.Register(id2, topic, rc)
+	assert.NoError(t, err)
+	msg := domain.Message{
+		From:    id1,
+		To:      topic,
+		Payload: payload,
 	}
-	type args struct {
-		m domain.Message
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &ChatService{
-				repository: tt.fields.repository,
-				notifier:   tt.fields.notifier,
-				moderator:  tt.fields.moderator,
-			}
-			if err := c.Send(tt.args.m); (err != nil) != tt.wantErr {
-				t.Errorf("ChatService.Send() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
+	err = cs.Send(msg)
+	assert.NoError(t, err)
+
+	m1 := <-c
+	assert.Equal(t, msg, m1.Message)
 }
 
 func TestChatService_History(t *testing.T) {
-	type fields struct {
-		repository ports.Repository
-		notifier   ports.Notifier
-		moderator  ports.Moderator
+	r, err := repository.NewDynamoDBRepository(repository.DefaultiLocalAWSClientConfig(), localTableName)
+	assert.NoError(t, err)
+
+	n, err := notifier.NewRabbitMQNotifierWithLocal(localURL)
+	assert.NoError(t, err)
+
+	m := moderator.NewIgnoreModerator()
+	cs := NewChatService(r, n, m)
+
+	assert.NotNil(t, cs)
+
+	id1 := uuid.New().String()
+
+	topic := "TestChatService_History" + "_" + uuid.New().String()
+	payload := "TestChatService_History Message"
+
+	msg := domain.Message{
+		From:    id1,
+		To:      topic,
+		Payload: payload,
 	}
-	type args struct {
-		dst   string
-		since time.Duration
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    []*domain.ModeratedMessage
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &ChatService{
-				repository: tt.fields.repository,
-				notifier:   tt.fields.notifier,
-				moderator:  tt.fields.moderator,
-			}
-			got, err := c.History(tt.args.dst, tt.args.since)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ChatService.History() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ChatService.History() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+	err = cs.Send(msg)
+	assert.NoError(t, err)
+
+	time.Sleep(2 * time.Second)
+	msgs, err := cs.History(topic, 3*time.Second)
+
+	assert.NoError(t, err)
+	assert.Len(t, msgs, 1)
 }
