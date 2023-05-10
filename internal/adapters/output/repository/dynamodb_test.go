@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/posilva/simplechat/internal/core/domain"
-	uuid "github.com/segmentio/ksuid"
+	testutils "github.com/posilva/simplechat/internal/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -26,8 +26,8 @@ func TestDynamoDBRepository_Store(t *testing.T) {
 	r, err := NewDynamoDBRepository(DefaultiLocalAWSClientConfig(), localTableName)
 	assert.NoError(t, err)
 
-	id1 := uuid.New().String()
-	topic := "TestDynamoDBRepository_Store"
+	id1 := testutils.NewID()
+	topic := testutils.NewUnique(testutils.Name(t))
 	payload := "TestDynamoDBRepository_Store Message"
 
 	m := domain.ModeratedMessage{
@@ -46,8 +46,9 @@ func TestDynamoDBRepository_Store(t *testing.T) {
 func TestDynamoDBRepository_Fetch(t *testing.T) {
 	r, err := NewDynamoDBRepository(DefaultiLocalAWSClientConfig(), localTableName)
 	assert.NoError(t, err)
-	id1 := uuid.New().String()
-	topic := "TestDynamoDBRepository_Fetch"
+	id1 := testutils.NewID()
+
+	topic := testutils.NewUnique(testutils.Name(t))
 	payload := "TestDynamoDBRepository_Fetch Message"
 
 	m := domain.ModeratedMessage{

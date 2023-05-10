@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/posilva/simplechat/internal/adapters/output/registry"
 	"github.com/posilva/simplechat/internal/core/domain"
 	"github.com/posilva/simplechat/internal/core/ports"
 
@@ -36,6 +37,7 @@ type RabbitMQNotifier struct {
 	queue     amqp.Queue
 	id2Topic  map[string]string
 	queueName string
+	reg       ports.Registry
 }
 
 // NewRabbitMQNotifierWithLocal creates a new instance for Local connection to RMQ
@@ -56,6 +58,7 @@ func NewRabbitMQNotifierWithLocal(url string) (*RabbitMQNotifier, error) {
 		registry:  make(map[string]notificationInfo),
 		id2Topic:  make(map[string]string),
 		queueName: ksuid.New().String(),
+		reg:       registry.NewInMemoryRegistry(),
 	}, nil
 }
 
@@ -71,8 +74,12 @@ func NewRabbitMQNotifierWithTLS(url string, tls *tls.Config) (*RabbitMQNotifier,
 	}
 
 	return &RabbitMQNotifier{
-		conn: conn,
-		ch:   ch,
+		conn:      conn,
+		ch:        ch,
+		registry:  make(map[string]notificationInfo),
+		id2Topic:  make(map[string]string),
+		queueName: ksuid.New().String(),
+		reg:       registry.NewInMemoryRegistry(),
 	}, nil
 }
 
@@ -107,16 +114,18 @@ func (n *RabbitMQNotifier) Broadcast(m domain.ModeratedMessage) error {
 	return nil
 }
 
-// Register
-func (n *RabbitMQNotifier) Register(id string, topic string, receiver ports.Receiver) error {
+// Subscribe
+func (n *RabbitMQNotifier) Subscribe(ep ports.Endpoint) error {
 	n.mu.Lock()
 	defer n.mu.Unlock()
+	id := ep.ID()
+	room := ep.Room()
 
-	t := internalTopic(topic)
+	t := internalTopic(room)
 
 	if v, ok := n.id2Topic[id]; ok {
-		if strings.Compare(v, topic) != 0 {
-			return fmt.Errorf("id: '%s' already registered to different topic: '%s'", id, topic)
+		if strings.Compare(v, t) != 0 {
+			return fmt.Errorf("id: '%s' already registered to different topic: '%s'", id, room)
 		}
 	}
 
@@ -134,12 +143,12 @@ func (n *RabbitMQNotifier) Register(id string, topic string, receiver ports.Rece
 		}
 		err := n.initTopic(t)
 		if err != nil {
-			return fmt.Errorf("failed to init topic '%s': %s", topic, err)
+			return fmt.Errorf("failed to init topic '%s': %s", room, err)
 		}
 
-		err = n.subscribe(receiver)
+		err = n.subscribe(ep)
 		if err != nil {
-			return fmt.Errorf("failed to subscribe to topic '%s': %s", topic, err)
+			return fmt.Errorf("failed to subscribe to topic '%s': %s", room, err)
 		}
 
 	}
@@ -147,17 +156,17 @@ func (n *RabbitMQNotifier) Register(id string, topic string, receiver ports.Rece
 }
 
 // DeRegister
-func (n *RabbitMQNotifier) DeRegister(id string) error {
+func (n *RabbitMQNotifier) Unsubscribe(ep ports.Endpoint) error {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
-	if t, ok := n.id2Topic[id]; ok {
+	if t, ok := n.id2Topic[ep.ID()]; ok {
 		if v, ok := n.registry[t]; ok {
-			delete(v.destinations, id)
+			delete(v.destinations, ep.ID())
 			n.registry[t] = v
 		}
 	}
-	delete(n.id2Topic, id)
+	delete(n.id2Topic, ep.ID())
 	return nil
 }
 
@@ -181,8 +190,8 @@ func (n *RabbitMQNotifier) subscribe(r ports.Receiver) error {
 				log.Printf("recovering from panic: %v", rr)
 				r.Recover()
 			}
-
 		}()
+
 		// TODO: terminate this using a channel otherwise it will be a go routine leak
 		for d := range msgs {
 			m := domain.ModeratedMessage{}

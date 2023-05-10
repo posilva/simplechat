@@ -6,105 +6,55 @@ import (
 
 	"github.com/posilva/simplechat/internal/adapters/output/moderator"
 	"github.com/posilva/simplechat/internal/adapters/output/notifier"
+	"github.com/posilva/simplechat/internal/adapters/output/registry"
 	"github.com/posilva/simplechat/internal/adapters/output/repository"
 	"github.com/posilva/simplechat/internal/core/domain"
-	uuid "github.com/segmentio/ksuid"
+	testutils "github.com/posilva/simplechat/internal/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
-const (
-	// TODO make a public constant
-	localTableName string = "local-dev-dev-simplechat"
-	localURL       string = "amqp://guest:guest@localhost:5672/"
-)
-
-// TODO: come up with something to share helpers for tests
-type testReceiver struct {
-	ch chan domain.ModeratedMessage
-	f  func()
-}
-
-func newTestReceiver(ch chan domain.ModeratedMessage, f func()) *testReceiver {
-	return &testReceiver{
-		ch,
-		f,
-	}
-}
-func (r *testReceiver) Receive(m domain.ModeratedMessage) {
-	r.f()
-	r.ch <- m
-}
-func (r *testReceiver) Recover() {
-	close(r.ch)
-}
 func TestNewChatService(t *testing.T) {
 	expType := &ChatService{}
-
-	r, err := repository.NewDynamoDBRepository(repository.DefaultiLocalAWSClientConfig(), localTableName)
-	assert.NoError(t, err)
-
-	n, err := notifier.NewRabbitMQNotifierWithLocal(localURL)
-	assert.NoError(t, err)
-
-	m := moderator.NewIgnoreModerator()
-	cs := NewChatService(r, n, m)
-
-	assert.NotNil(t, cs)
+	cs := newChatService(t)
 	assert.IsType(t, expType, cs)
 }
 
 func TestChatService_Send(t *testing.T) {
-	r, err := repository.NewDynamoDBRepository(repository.DefaultiLocalAWSClientConfig(), localTableName)
-	assert.NoError(t, err)
+	cs := newChatService(t)
 
-	n, err := notifier.NewRabbitMQNotifierWithLocal(localURL)
-	assert.NoError(t, err)
+	topic := testutils.NewUnique(testutils.Name(t))
 
-	m := moderator.NewIgnoreModerator()
-	cs := NewChatService(r, n, m)
-
-	assert.NotNil(t, cs)
-
-	topic := "TestChatService_Send" + "_" + uuid.New().String()
 	payload := "TestChatService_Send Message"
 
-	c := make(chan domain.ModeratedMessage, 1)
-	rc := newTestReceiver(c, func() {})
+	rc := testutils.NewTestReceiver()
 
-	id1 := uuid.New().String()
-	err = n.Register(id1, topic, rc)
+	ep1 := testutils.NewTestEndpoint(testutils.NewID(), topic, rc)
+	ep2 := testutils.NewTestEndpoint(testutils.NewID(), topic, rc)
+
+	err := cs.Login(ep1)
+	assert.NoError(t, err)
+	err = cs.Login(ep2)
 	assert.NoError(t, err)
 
-	id2 := uuid.New().String()
-	err = n.Register(id2, topic, rc)
-	assert.NoError(t, err)
 	msg := domain.Message{
-		From:    id1,
+		From:    ep1.ID(),
 		To:      topic,
 		Payload: payload,
 	}
 	err = cs.Send(msg)
 	assert.NoError(t, err)
 
-	m1 := <-c
+	m1 := <-rc.Channel()
 	assert.Equal(t, msg, m1.Message)
 }
 
 func TestChatService_History(t *testing.T) {
-	r, err := repository.NewDynamoDBRepository(repository.DefaultiLocalAWSClientConfig(), localTableName)
-	assert.NoError(t, err)
+	cs := newChatService(t)
 
-	n, err := notifier.NewRabbitMQNotifierWithLocal(localURL)
-	assert.NoError(t, err)
+	id1 := testutils.NewID()
 
-	m := moderator.NewIgnoreModerator()
-	cs := NewChatService(r, n, m)
+	topic := testutils.NewUnique(testutils.Name(t))
 
-	assert.NotNil(t, cs)
-
-	id1 := uuid.New().String()
-
-	topic := "TestChatService_History" + "_" + uuid.New().String()
 	payload := "TestChatService_History Message"
 
 	msg := domain.Message{
@@ -112,7 +62,7 @@ func TestChatService_History(t *testing.T) {
 		To:      topic,
 		Payload: payload,
 	}
-	err = cs.Send(msg)
+	err := cs.Send(msg)
 	assert.NoError(t, err)
 
 	time.Sleep(2 * time.Second)
@@ -120,4 +70,47 @@ func TestChatService_History(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Len(t, msgs, 1)
+}
+func TestChatService_Login(t *testing.T) {
+	cs := newChatService(t)
+
+	topic := testutils.NewUnique(testutils.Name(t))
+
+	rc := testutils.NewTestReceiver()
+	ep1 := testutils.NewTestEndpoint(testutils.NewID(), topic, rc)
+
+	err := cs.Login(ep1)
+	assert.NoError(t, err)
+
+}
+
+func TestChatService_Logout(t *testing.T) {
+
+	cs := newChatService(t)
+
+	topic := testutils.NewUnique(testutils.Name(t))
+
+	rc := testutils.NewTestReceiver()
+	ep1 := testutils.NewTestEndpoint(testutils.NewID(), topic, rc)
+
+	err := cs.Logout(ep1)
+	assert.NoError(t, err)
+}
+
+func newChatService(t *testing.T) *ChatService {
+	r, err := repository.NewDynamoDBRepository(repository.DefaultiLocalAWSClientConfig(), testutils.DynamoDBLocalTableName)
+	assert.NoError(t, err)
+
+	n, err := notifier.NewRabbitMQNotifierWithLocal(testutils.RabbitMQLocalURL)
+	assert.NoError(t, err)
+
+	m := moderator.NewIgnoreModerator()
+
+	reg := registry.NewInMemoryRegistry()
+
+	cs := NewChatService(r, n, m, reg)
+
+	assert.NotNil(t, cs)
+
+	return cs
 }

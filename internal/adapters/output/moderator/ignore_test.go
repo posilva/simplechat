@@ -4,7 +4,8 @@ import (
 	"testing"
 
 	"github.com/posilva/simplechat/internal/core/domain"
-	uuid "github.com/segmentio/ksuid"
+
+	testutils "github.com/posilva/simplechat/internal/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,8 +18,9 @@ func TestIgnoreModerator_Check(t *testing.T) {
 	mod := NewIgnoreModerator()
 	assert.NotNil(t, mod)
 
-	id1 := uuid.New().String()
-	topic := "TestIgnoreModerator_Check"
+	id1 := testutils.NewID()
+	topic := testutils.NewUnique(testutils.Name(t))
+
 	payload := "TestIgnoreModerator_Check Message"
 
 	m := domain.Message{

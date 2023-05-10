@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/posilva/simplechat/internal/core/domain"
-	uuid "github.com/segmentio/ksuid"
+	testutils "github.com/posilva/simplechat/internal/testutil"
 
 	assert "github.com/stretchr/testify/assert"
 )
@@ -14,25 +14,6 @@ const (
 	localURL    string = "amqp://guest:guest@localhost:5672/"
 	localURLSSL string = "amqps://guest:guest@localhost:5671/"
 )
-
-type testReceiver struct {
-	ch chan domain.ModeratedMessage
-	f  func()
-}
-
-func newTestReceiver(ch chan domain.ModeratedMessage, f func()) *testReceiver {
-	return &testReceiver{
-		ch,
-		f,
-	}
-}
-func (r *testReceiver) Receive(m domain.ModeratedMessage) {
-	r.f()
-	r.ch <- m
-}
-func (r *testReceiver) Recover() {
-	close(r.ch)
-}
 
 func TestNewRabbitMQNotifierWithLocal(t *testing.T) {
 	got, err := NewRabbitMQNotifierWithLocal(localURL)
@@ -62,23 +43,23 @@ func TestRabbitMQNotifier_Broadcast_ReceiveWihtPanic(t *testing.T) {
 	got, err := NewRabbitMQNotifierWithLocal(localURL)
 
 	assert.NoError(t, err, "expected not an error")
-	topic := "TestRabbitMQNotifier_Broadcast_ReceiveWihtPanic"
 
-	id1 := uuid.New().String()
-	id2 := uuid.New().String()
-	c := make(chan domain.ModeratedMessage, 1)
-	r := newTestReceiver(c, func() { panic("receive with panic") })
+	topic := testutils.NewUnique(testutils.Name(t))
 
-	err = got.Register(id1, topic, r)
+	r := testutils.NewTestReceiverWithFunc(func() { panic("receive with panic") })
+
+	ep1 := testutils.NewTestEndpoint(testutils.NewID(), topic, r)
+	ep2 := testutils.NewTestEndpoint(testutils.NewID(), topic, r)
+
+	err = got.Subscribe(ep1)
 	assert.NoError(t, err, "expected not an error")
 
-	err = got.Register(id2, topic, r)
+	err = got.Subscribe(ep2)
 	assert.NoError(t, err, "expected not an error")
-
 	payload := "TestRabbitMQNotifier_Broadcast Message"
 	m := domain.ModeratedMessage{
 		Message: domain.Message{
-			From:    id1,
+			From:    ep1.ID(),
 			To:      topic,
 			Payload: payload,
 		},
@@ -88,7 +69,7 @@ func TestRabbitMQNotifier_Broadcast_ReceiveWihtPanic(t *testing.T) {
 	err = got.Broadcast(m)
 
 	assert.NoError(t, err, "expected not an error")
-	m1 := <-c
+	m1 := <-r.Channel()
 	assert.Equal(t, domain.ModeratedMessage{}, m1)
 }
 
@@ -96,71 +77,75 @@ func TestRabbitMQNotifier_Broadcast(t *testing.T) {
 	got, err := NewRabbitMQNotifierWithLocal(localURL)
 
 	assert.NoError(t, err, "expected not an error")
-	topic := "TestRabbitMQNotifier_Broadcast"
+	topic := testutils.NewUnique(testutils.Name(t))
 
-	id1 := uuid.New().String()
-	id2 := uuid.New().String()
-	c := make(chan domain.ModeratedMessage, 1)
-	r := newTestReceiver(c, func() {})
+	r := testutils.NewTestReceiver()
 
-	err = got.Register(id1, topic, r)
+	ep1 := testutils.NewTestEndpoint(testutils.NewID(), topic, r)
+	ep2 := testutils.NewTestEndpoint(testutils.NewID(), topic, r)
+
+	err = got.Subscribe(ep1)
 	assert.NoError(t, err, "expected not an error")
 
-	err = got.Register(id2, topic, r)
+	err = got.Subscribe(ep2)
 	assert.NoError(t, err, "expected not an error")
 
 	payload := "TestRabbitMQNotifier_Broadcast Message"
 	m := domain.ModeratedMessage{
 		Message: domain.Message{
-			From:    id1,
+			From:    ep1.ID(),
 			To:      topic,
 			Payload: payload,
 		},
 		Level:           0,
 		FilteredPayload: payload,
 	}
+
 	err = got.Broadcast(m)
 
 	assert.NoError(t, err, "expected not an error")
-	m1 := <-c
+	m1 := <-r.Channel()
 	assert.Equal(t, m, m1)
 }
 
-func TestRabbitMQNotifier_Register(t *testing.T) {
+func TestRabbitMQNotifier_Subscriber(t *testing.T) {
 	got, err := NewRabbitMQNotifierWithLocal(localURL)
 
 	assert.NoError(t, err, "expected not an error")
-	topic := "TestRabbitMQNotifier_Register"
+	topic := testutils.NewUnique(testutils.Name(t))
 
-	id1 := uuid.New().String()
-	id2 := uuid.New().String()
-	id3 := uuid.New().String()
-	id4 := uuid.New().String()
+	r := testutils.NewTestReceiver()
+	ep1 := testutils.NewTestEndpoint(testutils.NewID(), topic, r)
+	ep2 := testutils.NewTestEndpoint(testutils.NewID(), topic, r)
+	ep3 := testutils.NewTestEndpoint(testutils.NewID(), topic, r)
+	ep4 := testutils.NewTestEndpoint(testutils.NewID(), topic, r)
 
-	r := &testReceiver{}
-	err = got.Register(id1, topic, r)
+	err = got.Subscribe(ep1)
 	assert.NoError(t, err, "expected not an error")
 
-	err = got.Register(id2, topic, r)
+	err = got.Subscribe(ep2)
 	assert.NoError(t, err, "expected not an error")
 
-	err = got.Register(id3, topic, r)
+	err = got.Subscribe(ep3)
 	assert.NoError(t, err, "expected not an error")
-	err = got.Register(id4, topic, r)
+
+	err = got.Subscribe(ep4)
 	assert.NoError(t, err, "expected not an error")
 }
 
-func TestRabbitMQNotifier_DeRegister(t *testing.T) {
+func TestRabbitMQNotifier_Unsubscribe(t *testing.T) {
 
 	got, err := NewRabbitMQNotifierWithLocal(localURL)
 
 	assert.NoError(t, err, "expected not an error")
+	topic := testutils.NewUnique(testutils.Name(t))
 
-	id1 := uuid.New().String()
-	r := &testReceiver{}
-	topic := "TestRabbitMQNotifier_DeRegister"
-	err = got.Register(id1, topic, r)
+	r := testutils.NewTestReceiver()
+	ep1 := testutils.NewTestEndpoint(testutils.NewID(), topic, r)
+
+	err = got.Subscribe(ep1)
 	assert.NoError(t, err, "expected not an error")
-	err = got.DeRegister(id1)
+
+	err = got.Unsubscribe(ep1)
 	assert.NoError(t, err, "expected not an error")
 }

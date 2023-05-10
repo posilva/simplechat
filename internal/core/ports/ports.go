@@ -10,6 +10,8 @@ import (
 
 // ChatService defines the actions that a chat service provides
 type ChatService interface {
+	Login(ep Endpoint)
+	Logout(ep Endpoint)
 	Send(domain.Message) error
 	History(dst string, since time.Duration) ([]*domain.ModeratedMessage, error)
 }
@@ -24,7 +26,8 @@ type Repository interface {
 // Notifier defines the interface to handle with
 // the notifications of the chat messages
 type Notifier interface {
-	Registry
+	Subscribe(ep Endpoint) error
+	Unsubscribe(ep Endpoint) error
 	Broadcast(m domain.ModeratedMessage) error
 }
 
@@ -34,13 +37,19 @@ type Moderator interface {
 	Check(m domain.Message) (*domain.ModeratedMessage, error)
 }
 
-// Registry defines the interface of a EndPoint registry
+// Registry defines the interface of a endpoint registries
 type Registry interface {
-	Register(id string, topic string, r Receiver) error
-	DeRegister(id string) error
+	Register(ep Endpoint) error
+	DeRegister(ep Endpoint) error
 }
 
 type Receiver interface {
 	Receive(m domain.ModeratedMessage)
 	Recover()
+}
+
+type Endpoint interface {
+	Receiver
+	ID() string
+	Room() string
 }
