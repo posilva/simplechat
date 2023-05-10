@@ -1,4 +1,4 @@
-// package domain holds the data model structs that are used between
+// Package domain holds the data model structs that are used between
 // the different layers
 package domain
 
@@ -14,6 +14,6 @@ type Message struct {
 type ModeratedMessage struct {
 	Message
 	ID              string
-	Level           uint
 	FilteredPayload string
+	Level           uint
 }

@@ -1,3 +1,4 @@
+// Package repository is Repository interface implementations
 package repository
 
 import (
@@ -8,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 )
 
+// DefaultiLocalAWSClientConfig returns the default local AWS config
 func DefaultiLocalAWSClientConfig() aws.Config {
 
 	host := "http://localhost:4566" // default value pointing for local stack

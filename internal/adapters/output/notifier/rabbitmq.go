@@ -1,3 +1,4 @@
+// Package notifier handles notification implementations
 package notifier
 
 import (
@@ -19,25 +20,27 @@ import (
 )
 
 const (
-	TopicPrefix string = "grp_"
+	topicPrefix string = "grp_"
 )
 
 type destinationSet map[string]struct{}
 
 type notificationInfo struct {
-	name         string
 	destinations destinationSet
+	name         string
 }
 
+// RabbitMQNotifier implements RabbitMQ based notifications
 type RabbitMQNotifier struct {
-	mu        sync.Mutex
+	queueName string
+	id2Topic  map[string]string
 	conn      *amqp.Connection
 	ch        *amqp.Channel
-	registry  map[string]notificationInfo
 	queue     amqp.Queue
-	id2Topic  map[string]string
-	queueName string
-	reg       ports.Registry
+
+	reg      ports.Registry
+	mu       sync.Mutex
+	registry map[string]notificationInfo
 }
 
 // NewRabbitMQNotifierWithLocal creates a new instance for Local connection to RMQ
@@ -91,7 +94,7 @@ func (n *RabbitMQNotifier) Broadcast(m domain.ModeratedMessage) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	if _, ok := n.registry[t]; ok {
-		body, err := toJson(m)
+		body, err := toJSON(m)
 		if err != nil {
 			return fmt.Errorf("failed to parse json: %s", err)
 		}
@@ -114,7 +117,7 @@ func (n *RabbitMQNotifier) Broadcast(m domain.ModeratedMessage) error {
 	return nil
 }
 
-// Subscribe
+// Subscribe to notifications
 func (n *RabbitMQNotifier) Subscribe(ep ports.Endpoint) error {
 	n.mu.Lock()
 	defer n.mu.Unlock()
@@ -155,7 +158,7 @@ func (n *RabbitMQNotifier) Subscribe(ep ports.Endpoint) error {
 	return nil
 }
 
-// DeRegister
+// Unsubscribe notifications
 func (n *RabbitMQNotifier) Unsubscribe(ep ports.Endpoint) error {
 	n.mu.Lock()
 	defer n.mu.Unlock()
@@ -253,7 +256,7 @@ func (n *RabbitMQNotifier) initTopic(t string) error {
 }
 
 func internalTopic(dst string) string {
-	return fmt.Sprintf("%s%s", TopicPrefix, dst)
+	return fmt.Sprintf("%s%s", topicPrefix, dst)
 }
 
 func newDestinationSet(init string) destinationSet {
@@ -262,6 +265,6 @@ func newDestinationSet(init string) destinationSet {
 	return d
 }
 
-func toJson(m domain.ModeratedMessage) ([]byte, error) {
+func toJSON(m domain.ModeratedMessage) ([]byte, error) {
 	return json.Marshal(m)
 }

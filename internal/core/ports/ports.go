@@ -1,4 +1,4 @@
-// package ports should define the interfaces to interact
+// Package ports should define the interfaces to interact
 // with services
 package ports
 
@@ -43,11 +43,13 @@ type Registry interface {
 	DeRegister(ep Endpoint) error
 }
 
+// Receiver define the interface to receive messages
 type Receiver interface {
 	Receive(m domain.ModeratedMessage)
 	Recover()
 }
 
+// Endpoint defines an interface of an endpoint that can receive a message
 type Endpoint interface {
 	Receiver
 	ID() string

@@ -37,11 +37,13 @@ type messageRecord struct {
 	FilterLevel string `dynamodbav:"filter_level,omitempty" json:"filter_level"`
 }
 
+// DynamoDBRepository implements Repository interface for DynamoDB
 type DynamoDBRepository struct {
 	client    *dynamodb.Client
 	tableName string
 }
 
+// NewDynamoDBRepository creates a new DynamoDB repository
 func NewDynamoDBRepository(cfg aws.Config, table string) (*DynamoDBRepository, error) {
 	c := dynamodb.NewFromConfig(cfg)
 	return &DynamoDBRepository{
@@ -50,6 +52,7 @@ func NewDynamoDBRepository(cfg aws.Config, table string) (*DynamoDBRepository, e
 	}, nil
 }
 
+// Store implementes the Repository interface for DynamoDB
 func (r *DynamoDBRepository) Store(m domain.ModeratedMessage) error {
 	it := messageRecord{
 		PK:      chatPk(m.To),
@@ -91,6 +94,7 @@ func (r *DynamoDBRepository) Store(m domain.ModeratedMessage) error {
 	return nil
 }
 
+// Fetch implementes the Repository interface for DynamoDB
 func (r *DynamoDBRepository) Fetch(key string, since time.Duration) ([]*domain.ModeratedMessage, error) {
 	now := time.Now().UTC()
 
@@ -139,6 +143,7 @@ func (r *DynamoDBRepository) Fetch(key string, since time.Duration) ([]*domain.M
 	// TODO: maybe return some information here
 	return result, nil
 }
+
 func toModeratedMessage(m messageRecord) *domain.ModeratedMessage {
 	to := strings.TrimPrefix(m.PK, pkPrefix)
 	id := strings.TrimPrefix(m.SK, skPrefix)

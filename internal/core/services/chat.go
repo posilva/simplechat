@@ -1,3 +1,4 @@
+// Package services implements services
 package services
 
 import (
@@ -46,6 +47,7 @@ func (c *ChatService) Logout(ep ports.Endpoint) error {
 	return c.notifier.Unsubscribe(ep)
 }
 
+// Send a message
 func (c *ChatService) Send(m domain.Message) error {
 	mm, err := c.moderator.Check(m)
 	if err != nil {
@@ -62,6 +64,7 @@ func (c *ChatService) Send(m domain.Message) error {
 	return nil
 }
 
+// History retrieves the chat history since a point in the past
 func (c *ChatService) History(dest string, since time.Duration) ([]*domain.ModeratedMessage, error) {
 	return c.repository.Fetch(dest, since)
 }

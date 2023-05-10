@@ -1,3 +1,4 @@
+// Package registry implements the Registry interface
 package registry
 
 import (
@@ -10,13 +11,14 @@ import (
 
 type idSet map[string]struct{}
 
+// InMemoryRegistry implements an in memory registry
 type InMemoryRegistry struct {
-	mu     sync.Mutex
-	idsMap map[string]string
-
 	roomsMap map[string]idSet
+	idsMap   map[string]string
+	mu       sync.Mutex
 }
 
+// NewInMemoryRegistry creates a new in memory registry
 func NewInMemoryRegistry() *InMemoryRegistry {
 	return &InMemoryRegistry{
 		idsMap:   make(map[string]string),
@@ -24,6 +26,7 @@ func NewInMemoryRegistry() *InMemoryRegistry {
 	}
 }
 
+// Register from the registry
 func (r *InMemoryRegistry) Register(ep ports.Endpoint) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -48,6 +51,7 @@ func (r *InMemoryRegistry) Register(ep ports.Endpoint) error {
 	return nil
 }
 
+// DeRegister from the registry
 func (r *InMemoryRegistry) DeRegister(ep ports.Endpoint) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
