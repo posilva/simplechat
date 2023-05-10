@@ -1,12 +1,14 @@
-.PHONY: fmt test cover infra-up infra-up infra-test infra-local infra-local-down infra-upd
+.PHONY: fmt test cover infra-up infra-up infra-test infra-local infra-local-down infra-upd lint
 
 # This assumes tflocal is installed https://github.com/localstack/terraform-local
 
 all: infra-down infra-up infra-test
 infra-upd:
 	cd Docker && docker-compose -f docker-compose.yaml up -d
+
 infra-up:
 	cd Docker && docker-compose -f docker-compose.yaml up 
+
 infra-down:
 	cd Docker && docker-compose -f docker-compose.yaml down 
 
@@ -25,7 +27,11 @@ infra-local-down:
 fmt:
 	go fmt && cd terraform && terraform fmt
 
+lint: 
+	golangci-lint run
+
 test:
 	go test -v ./... -covermode=count -coverprofile=cover.out && go tool cover -func=cover.out
+
 cover: test
 	go tool cover -html=cover.out -o coverage.html

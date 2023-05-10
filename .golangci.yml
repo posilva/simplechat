@@ -1,0 +1,55 @@
+# This file contains configuration options for golangci linter
+# Any options can be overriden by creating a .golangci.yml 
+# file in any deeper levels of the path hierarchy.
+linters:
+  enable:
+    - errcheck
+    - goimports
+    - revive
+    - govet
+    - staticcheck
+
+# linter settings
+linters-settings:
+  govet:
+    # report about shadowed variables
+    check-shadowing: true
+    enable:
+      - fieldalignment
+    disable:
+      - structtag
+
+  enable:
+    - fieldalignment
+    - nakedred
+    - stylecheck
+    - goconst
+    - gocyclo
+    - depguard
+    - prealloc
+    - nosprintfhostport
+    - dupl
+
+  disable:
+    - govet
+  
+issues:
+  # excluding configuration per path
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  
+# execution configuration
+run:
+  # give it 1 min timeout
+  timeout: 1m
+
+  # exit code when at least one issue was found
+  issues-exit-code: 2

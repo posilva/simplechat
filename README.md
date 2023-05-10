@@ -11,6 +11,7 @@ Simple Chat service using Hexagonal Architecture with Go
 - Install [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/)
 - Install Docker [Compose](https://github.com/docker/compose)
 - Install [AWS CLI](https://aws.amazon.com/cli/)
+- Install [GolangCI Linter](https://golangci-lint.run/usage/install/)
 
 
 ## Use Makefile targets
@@ -72,7 +73,7 @@ sequenceDiagram
 
 - [ ] Improve tests that cover errors
 - [ ] Separated UnitTest from Integration Tests (with local infra)
-- [ ] Integrate Golang Linters
+- [x] Integrate Golang Linters
 - [ ] Implement WebSocket Handler 
 - [ ] Add CICD with Github Actions
 - [ ] Add Configuration (Consul, Vault)
