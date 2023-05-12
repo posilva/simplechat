@@ -12,6 +12,7 @@ Simple Chat service using Hexagonal Architecture with Go
 - Install Docker [Compose](https://github.com/docker/compose)
 - Install [AWS CLI](https://aws.amazon.com/cli/)
 - Install [GolangCI Linter](https://golangci-lint.run/usage/install/)
+- Install [gomock](https://thedevelopercafe.com/articles/mocking-interfaces-in-go-with-gomock-670b1a640b00) 
 
 
 ## Use Makefile targets
@@ -72,6 +73,7 @@ sequenceDiagram
 # TODO
 
 - [ ] Improve tests that cover errors
+- [x] Integrate a mock framework (gomock)
 - [ ] Separated UnitTest from Integration Tests (with local infra)
 - [x] Integrate Golang Linters
 - [ ] Implement WebSocket Handler 
