@@ -6,45 +6,34 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"log"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/posilva/simplechat/internal/adapters/output/registry"
 	"github.com/posilva/simplechat/internal/core/domain"
 	"github.com/posilva/simplechat/internal/core/ports"
 
 	amqp "github.com/rabbitmq/amqp091-go"
-	"github.com/segmentio/ksuid"
 )
 
 const (
 	topicPrefix string = "grp_"
 )
 
-type destinationSet map[string]struct{}
-
-type notificationInfo struct {
-	destinations destinationSet
-	name         string
+type subscriptionInfo struct {
+	queueName string
 }
 
 // RabbitMQNotifier implements RabbitMQ based notifications
 type RabbitMQNotifier struct {
-	queueName string
-	id2Topic  map[string]string
-	conn      *amqp.Connection
-	ch        *amqp.Channel
-	queue     amqp.Queue
-
-	reg      ports.Registry
-	mu       sync.Mutex
-	registry map[string]notificationInfo
+	registry      ports.Registry
+	subscriptions map[string]subscriptionInfo
+	conn          *amqp.Connection
+	ch            *amqp.Channel
+	mu            sync.Mutex
 }
 
 // NewRabbitMQNotifierWithLocal creates a new instance for Local connection to RMQ
-func NewRabbitMQNotifierWithLocal(url string) (*RabbitMQNotifier, error) {
+func NewRabbitMQNotifierWithLocal(url string, r ports.Registry) (*RabbitMQNotifier, error) {
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err
@@ -56,17 +45,16 @@ func NewRabbitMQNotifierWithLocal(url string) (*RabbitMQNotifier, error) {
 	}
 
 	return &RabbitMQNotifier{
-		conn:      conn,
-		ch:        ch,
-		registry:  make(map[string]notificationInfo),
-		id2Topic:  make(map[string]string),
-		queueName: ksuid.New().String(),
-		reg:       registry.NewInMemoryRegistry(),
+		registry:      r,
+		mu:            sync.Mutex{},
+		conn:          conn,
+		ch:            ch,
+		subscriptions: map[string]subscriptionInfo{},
 	}, nil
 }
 
 // NewRabbitMQNotifierWithTLS creates a new instance for RMQ connection using TLS
-func NewRabbitMQNotifierWithTLS(url string, tls *tls.Config) (*RabbitMQNotifier, error) {
+func NewRabbitMQNotifierWithTLS(url string, tls *tls.Config, r ports.Registry) (*RabbitMQNotifier, error) {
 	conn, err := amqp.DialTLS(url, tls)
 	if err != nil {
 		return nil, err
@@ -77,12 +65,11 @@ func NewRabbitMQNotifierWithTLS(url string, tls *tls.Config) (*RabbitMQNotifier,
 	}
 
 	return &RabbitMQNotifier{
-		conn:      conn,
-		ch:        ch,
-		registry:  make(map[string]notificationInfo),
-		id2Topic:  make(map[string]string),
-		queueName: ksuid.New().String(),
-		reg:       registry.NewInMemoryRegistry(),
+		registry:      r,
+		mu:            sync.Mutex{},
+		conn:          conn,
+		ch:            ch,
+		subscriptions: map[string]subscriptionInfo{},
 	}, nil
 }
 
@@ -90,10 +77,14 @@ func NewRabbitMQNotifierWithTLS(url string, tls *tls.Config) (*RabbitMQNotifier,
 func (n *RabbitMQNotifier) Broadcast(m domain.ModeratedMessage) error {
 	n.mu.Lock()
 	defer n.mu.Unlock()
+
 	t := internalTopic(m.To)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
-	if _, ok := n.registry[t]; ok {
+
+	if _, ok := n.subscriptions[t]; ok {
+		//TODO: PMS: consider implementing a decoder
 		body, err := toJSON(m)
 		if err != nil {
 			return fmt.Errorf("failed to parse json: %s", err)
@@ -101,10 +92,10 @@ func (n *RabbitMQNotifier) Broadcast(m domain.ModeratedMessage) error {
 
 		// TODO: PMS: check options later
 		err = n.ch.PublishWithContext(ctx,
-			t,            // exchange
-			n.queue.Name, // routing key
-			false,        // mandatory
-			false,        // immediate
+			t, // exchange
+			"",
+			false, // mandatory
+			false, // immediate
 			amqp.Publishing{
 				ContentType: "application/json",
 				Body:        body,
@@ -121,67 +112,49 @@ func (n *RabbitMQNotifier) Broadcast(m domain.ModeratedMessage) error {
 func (n *RabbitMQNotifier) Subscribe(ep ports.Endpoint) error {
 	n.mu.Lock()
 	defer n.mu.Unlock()
-	id := ep.ID()
 	room := ep.Room()
 
+	err := n.registry.Register(ep)
+	if err != nil {
+		return fmt.Errorf("failed to register endpoit: %v", err)
+	}
 	t := internalTopic(room)
 
-	if v, ok := n.id2Topic[id]; ok {
-		if strings.Compare(v, t) != 0 {
-			return fmt.Errorf("id: '%s' already registered to different topic: '%s'", id, room)
-		}
-	}
-
-	n.id2Topic[id] = t
-
-	// add the id to existing set
-	if v, ok := n.registry[t]; ok {
-		v.destinations[id] = struct{}{}
-		n.registry[t] = v
-	} else {
-		// create the registry entry
-		n.registry[t] = notificationInfo{
-			name:         t,
-			destinations: newDestinationSet(id),
-		}
-		err := n.initTopic(t)
+	if _, ok := n.subscriptions[t]; !ok {
+		queueName, err := n.initTopic(t)
 		if err != nil {
 			return fmt.Errorf("failed to init topic '%s': %s", room, err)
 		}
 
-		err = n.subscribe(ep)
-		if err != nil {
-			return fmt.Errorf("failed to subscribe to topic '%s': %s", room, err)
+		n.subscriptions[t] = subscriptionInfo{
+			queueName: queueName,
 		}
 
+		err = n.createSubscription(queueName, ep)
+		if err != nil {
+			return fmt.Errorf("failed to failed to create subscription to topic '%s': %s", room, err)
+		}
 	}
 	return nil
 }
 
-// Unsubscribe notifications
+// Unsubscribe unsubscribes the endpoint to receive notificatoins
 func (n *RabbitMQNotifier) Unsubscribe(ep ports.Endpoint) error {
 	n.mu.Lock()
 	defer n.mu.Unlock()
-
-	if t, ok := n.id2Topic[ep.ID()]; ok {
-		if v, ok := n.registry[t]; ok {
-			delete(v.destinations, ep.ID())
-			n.registry[t] = v
-		}
-	}
-	delete(n.id2Topic, ep.ID())
-	return nil
+	return n.registry.DeRegister(ep)
 }
 
-func (n *RabbitMQNotifier) subscribe(r ports.Receiver) error {
+func (n *RabbitMQNotifier) createSubscription(queue string, r ports.Receiver) error {
+
 	msgs, err := n.ch.Consume(
-		n.queue.Name, // queue
-		"",           // consumer
-		true,         // auto-ack
-		false,        // exclusive
-		false,        // no-local
-		false,        // no-wait
-		nil,          // args
+		queue, // queue
+		"",    // consumer
+		true,  // auto-ack
+		false, // exclusive
+		false, // no-local
+		false, // no-wait
+		nil,   // args
 	)
 	if err != nil {
 		return err
@@ -190,7 +163,6 @@ func (n *RabbitMQNotifier) subscribe(r ports.Receiver) error {
 	go func() {
 		defer func() {
 			if rr := recover(); rr != nil {
-				log.Printf("recovering from panic: %v", rr)
 				r.Recover()
 			}
 		}()
@@ -201,20 +173,15 @@ func (n *RabbitMQNotifier) subscribe(r ports.Receiver) error {
 			err := json.Unmarshal(d.Body, &m)
 
 			if err != nil {
-				log.Printf("failed to parse received moderated message: %v", err)
 				continue
 			}
 
-			for k := range n.id2Topic {
-				if k != m.From {
-					r.Receive(m)
-				}
-			}
+			n.registry.Notify(m)
 		}
 	}()
 	return nil
 }
-func (n *RabbitMQNotifier) initTopic(t string) error {
+func (n *RabbitMQNotifier) initTopic(t string) (string, error) {
 	// create the exchange
 	err := n.ch.ExchangeDeclare(
 		t,        // name
@@ -226,20 +193,20 @@ func (n *RabbitMQNotifier) initTopic(t string) error {
 		nil,      // arguments
 	)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	q, err := n.ch.QueueDeclare(
-		n.queueName, // name
-		false,       // durable
-		true,        // delete when unused
-		true,        // exclusive
-		false,       // no-wait
-		nil,         // arguments
+		"",    // name
+		false, // durable
+		true,  // delete when unused
+		true,  // exclusive
+		false, // no-wait
+		nil,   // arguments
 	)
 
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	err = n.ch.QueueBind(
@@ -249,20 +216,13 @@ func (n *RabbitMQNotifier) initTopic(t string) error {
 		false,
 		nil)
 	if err != nil {
-		return err
+		return "", err
 	}
-	n.queue = q
-	return nil
+	return q.Name, nil
 }
 
 func internalTopic(dst string) string {
 	return fmt.Sprintf("%s%s", topicPrefix, dst)
-}
-
-func newDestinationSet(init string) destinationSet {
-	d := make(map[string]struct{})
-	d[init] = struct{}{}
-	return d
 }
 
 func toJSON(m domain.ModeratedMessage) ([]byte, error) {

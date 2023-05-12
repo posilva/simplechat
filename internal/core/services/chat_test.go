@@ -31,9 +31,9 @@ func TestChatService_Send(t *testing.T) {
 	ep1 := testutils.NewTestEndpoint(testutils.NewID(), topic, rc)
 	ep2 := testutils.NewTestEndpoint(testutils.NewID(), topic, rc)
 
-	err := cs.Login(ep1)
+	err := cs.Register(ep1)
 	assert.NoError(t, err)
-	err = cs.Login(ep2)
+	err = cs.Register(ep2)
 	assert.NoError(t, err)
 
 	msg := domain.Message{
@@ -71,7 +71,7 @@ func TestChatService_History(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, msgs, 1)
 }
-func TestChatService_Login(t *testing.T) {
+func TestChatService_Register(t *testing.T) {
 	cs := newChatService(t)
 
 	topic := testutils.NewUnique(testutils.Name(t))
@@ -79,12 +79,12 @@ func TestChatService_Login(t *testing.T) {
 	rc := testutils.NewTestReceiver()
 	ep1 := testutils.NewTestEndpoint(testutils.NewID(), topic, rc)
 
-	err := cs.Login(ep1)
+	err := cs.Register(ep1)
 	assert.NoError(t, err)
 
 }
 
-func TestChatService_Logout(t *testing.T) {
+func TestChatService_UnRegister(t *testing.T) {
 
 	cs := newChatService(t)
 
@@ -93,7 +93,7 @@ func TestChatService_Logout(t *testing.T) {
 	rc := testutils.NewTestReceiver()
 	ep1 := testutils.NewTestEndpoint(testutils.NewID(), topic, rc)
 
-	err := cs.Logout(ep1)
+	err := cs.UnRegister(ep1)
 	assert.NoError(t, err)
 }
 
@@ -101,14 +101,14 @@ func newChatService(t *testing.T) *ChatService {
 	r, err := repository.NewDynamoDBRepository(repository.DefaultiLocalAWSClientConfig(), testutils.DynamoDBLocalTableName)
 	assert.NoError(t, err)
 
-	n, err := notifier.NewRabbitMQNotifierWithLocal(testutils.RabbitMQLocalURL)
+	reg := registry.NewInMemoryRegistry()
+
+	n, err := notifier.NewRabbitMQNotifierWithLocal(testutils.RabbitMQLocalURL, reg)
 	assert.NoError(t, err)
 
 	m := moderator.NewIgnoreModerator()
 
-	reg := registry.NewInMemoryRegistry()
-
-	cs := NewChatService(r, n, m, reg)
+	cs := NewChatService(r, n, m)
 
 	assert.NotNil(t, cs)
 

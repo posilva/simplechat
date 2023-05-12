@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"testing"
 
+	"github.com/posilva/simplechat/internal/adapters/output/registry"
 	"github.com/posilva/simplechat/internal/core/domain"
 	testutils "github.com/posilva/simplechat/internal/testutil"
 
@@ -16,7 +17,7 @@ const (
 )
 
 func TestNewRabbitMQNotifierWithLocal(t *testing.T) {
-	got, err := NewRabbitMQNotifierWithLocal(localURL)
+	got, err := NewRabbitMQNotifierWithLocal(localURL, registry.NewInMemoryRegistry())
 
 	expectedType := &RabbitMQNotifier{}
 	assert.NoError(t, err, "expected not an error")
@@ -28,7 +29,7 @@ func TestNewRabbitMQNotifierWithLocal(t *testing.T) {
 
 func TestNewRabbitMQNotifierWithTLS(t *testing.T) {
 
-	got, err := NewRabbitMQNotifierWithTLS(localURLSSL, &tls.Config{InsecureSkipVerify: true})
+	got, err := NewRabbitMQNotifierWithTLS(localURLSSL, &tls.Config{InsecureSkipVerify: true}, registry.NewInMemoryRegistry())
 
 	expectedType := &RabbitMQNotifier{}
 	assert.NoError(t, err, "expected not an error")
@@ -36,11 +37,10 @@ func TestNewRabbitMQNotifierWithTLS(t *testing.T) {
 	assert.IsType(t, expectedType, got, "expected RabbitMQNotifier ")
 	assert.NotNil(t, got.conn, "connection should be non nil")
 	assert.NotNil(t, got.ch, "channel should be non nil")
-
 }
 
 func TestRabbitMQNotifier_Broadcast_ReceiveWihtPanic(t *testing.T) {
-	got, err := NewRabbitMQNotifierWithLocal(localURL)
+	got, err := NewRabbitMQNotifierWithLocal(localURL, registry.NewInMemoryRegistry())
 
 	assert.NoError(t, err, "expected not an error")
 
@@ -74,7 +74,7 @@ func TestRabbitMQNotifier_Broadcast_ReceiveWihtPanic(t *testing.T) {
 }
 
 func TestRabbitMQNotifier_Broadcast(t *testing.T) {
-	got, err := NewRabbitMQNotifierWithLocal(localURL)
+	got, err := NewRabbitMQNotifierWithLocal(localURL, registry.NewInMemoryRegistry())
 
 	assert.NoError(t, err, "expected not an error")
 	topic := testutils.NewUnique(testutils.Name(t))
@@ -109,7 +109,7 @@ func TestRabbitMQNotifier_Broadcast(t *testing.T) {
 }
 
 func TestRabbitMQNotifier_Subscriber(t *testing.T) {
-	got, err := NewRabbitMQNotifierWithLocal(localURL)
+	got, err := NewRabbitMQNotifierWithLocal(localURL, registry.NewInMemoryRegistry())
 
 	assert.NoError(t, err, "expected not an error")
 	topic := testutils.NewUnique(testutils.Name(t))
@@ -135,7 +135,7 @@ func TestRabbitMQNotifier_Subscriber(t *testing.T) {
 
 func TestRabbitMQNotifier_Unsubscribe(t *testing.T) {
 
-	got, err := NewRabbitMQNotifierWithLocal(localURL)
+	got, err := NewRabbitMQNotifierWithLocal(localURL, registry.NewInMemoryRegistry())
 
 	assert.NoError(t, err, "expected not an error")
 	topic := testutils.NewUnique(testutils.Name(t))

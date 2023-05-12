@@ -12,7 +12,6 @@ import (
 
 // ChatService implements the chat logic
 type ChatService struct {
-	registry   ports.Registry
 	repository ports.Repository
 	notifier   ports.Notifier
 	moderator  ports.Moderator
@@ -20,30 +19,21 @@ type ChatService struct {
 
 // NewChatService creates a new instance of a chat service using
 // existing repository, notifier and moderator providers
-func NewChatService(repo ports.Repository, notif ports.Notifier, mod ports.Moderator, reg ports.Registry) *ChatService {
+func NewChatService(repo ports.Repository, notif ports.Notifier, mod ports.Moderator) *ChatService {
 	return &ChatService{
 		repository: repo,
 		notifier:   notif,
 		moderator:  mod,
-		registry:   reg,
 	}
 }
 
-// Login registers an Endpoint in the chat service
-func (c *ChatService) Login(ep ports.Endpoint) error {
-	err := c.registry.Register(ep)
-	if err != nil {
-		return errors.Join(fmt.Errorf("failed to register id: %s in room %s: %v", ep.ID(), ep.Room(), err))
-	}
+// Register registers an Endpoint in the chat service
+func (c *ChatService) Register(ep ports.Endpoint) error {
 	return c.notifier.Subscribe(ep)
 }
 
-// Logout unregisters an Endpoint in the chat service
-func (c *ChatService) Logout(ep ports.Endpoint) error {
-	err := c.registry.DeRegister(ep)
-	if err != nil {
-		return errors.Join(fmt.Errorf("failed to deregister id: %s: %v", ep.ID(), err))
-	}
+// UnRegister unregisters an Endpoint in the chat service
+func (c *ChatService) UnRegister(ep ports.Endpoint) error {
 	return c.notifier.Unsubscribe(ep)
 }
 

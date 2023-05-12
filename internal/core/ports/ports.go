@@ -39,6 +39,7 @@ type Moderator interface {
 
 // Registry defines the interface of a endpoint registries
 type Registry interface {
+	Notify(m domain.ModeratedMessage)
 	Register(ep Endpoint) error
 	DeRegister(ep Endpoint) error
 }
