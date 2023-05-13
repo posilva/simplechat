@@ -71,7 +71,8 @@ sequenceDiagram
 
 
 # TODO
-
+ 
+- [ ] Implement a Presence component that embeds the notification system
 - [ ] Improve tests that cover errors
 - [x] Integrate a mock framework (gomock)
 - [ ] Separated UnitTest from Integration Tests (with local infra)
