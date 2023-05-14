@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/posilva/simplechat/internal/core/services"
+	"github.com/posilva/simplechat/internal/core/ports"
 )
 
 var upgrader = websocket.Upgrader{
@@ -18,11 +18,11 @@ var upgrader = websocket.Upgrader{
 
 // WebSockerHandler manages the handling of HTTP requests
 type WebSockerHandler struct {
-	chat services.ChatService
+	chat ports.ChatService
 }
 
 // NewWebSockerHandler creates a new HTTP handler
-func NewWebSockerHandler(chat services.ChatService) *WebSockerHandler {
+func NewWebSockerHandler(chat ports.ChatService) *WebSockerHandler {
 	return &WebSockerHandler{
 		chat: chat,
 	}
@@ -54,7 +54,7 @@ func (h *WebSockerHandler) Handle(ctx *gin.Context) {
 	}
 	go func() {
 		defer func() {
-			_ = h.chat.UnRegister(ep)
+			_ = h.chat.DeRegister(ep)
 			_ = ws.Close()
 		}()
 
@@ -79,7 +79,7 @@ func (h *WebSockerHandler) Handle(ctx *gin.Context) {
 	}()
 
 	defer func() {
-		_ = h.chat.UnRegister(ep)
+		_ = h.chat.DeRegister(ep)
 	}()
 
 	for mm := range rc.Channel() {

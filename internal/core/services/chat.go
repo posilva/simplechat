@@ -32,8 +32,8 @@ func (c *ChatService) Register(ep ports.Endpoint) error {
 	return c.notifier.Subscribe(ep)
 }
 
-// UnRegister unregisters an Endpoint in the chat service
-func (c *ChatService) UnRegister(ep ports.Endpoint) error {
+// DeRegister unregisters an Endpoint in the chat service
+func (c *ChatService) DeRegister(ep ports.Endpoint) error {
 	return c.notifier.Unsubscribe(ep)
 }
 

@@ -10,8 +10,8 @@ import (
 
 // ChatService defines the actions that a chat service provides
 type ChatService interface {
-	Login(ep Endpoint)
-	Logout(ep Endpoint)
+	Register(ep Endpoint) error
+	DeRegister(ep Endpoint) error
 	Send(domain.Message) error
 	History(dst string, since time.Duration) ([]*domain.ModeratedMessage, error)
 }

@@ -84,7 +84,7 @@ func TestChatService_Register(t *testing.T) {
 
 }
 
-func TestChatService_UnRegister(t *testing.T) {
+func TestChatService_DeRegister(t *testing.T) {
 
 	cs := newChatService(t)
 
@@ -93,7 +93,7 @@ func TestChatService_UnRegister(t *testing.T) {
 	rc := testutils.NewTestReceiver()
 	ep1 := testutils.NewTestEndpoint(testutils.NewID(), topic, rc)
 
-	err := cs.UnRegister(ep1)
+	err := cs.DeRegister(ep1)
 	assert.NoError(t, err)
 }
 
