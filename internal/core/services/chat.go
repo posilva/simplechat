@@ -15,21 +15,32 @@ type ChatService struct {
 	repository ports.Repository
 	notifier   ports.Notifier
 	moderator  ports.Moderator
+	presence   ports.Presence
 }
 
 // NewChatService creates a new instance of a chat service using
 // existing repository, notifier and moderator providers
-func NewChatService(repo ports.Repository, notif ports.Notifier, mod ports.Moderator) *ChatService {
+func NewChatService(repo ports.Repository, notif ports.Notifier, mod ports.Moderator, ps ports.Presence) *ChatService {
 	return &ChatService{
 		repository: repo,
 		notifier:   notif,
 		moderator:  mod,
+		presence:   ps,
 	}
 }
 
 // Register registers an Endpoint in the chat service
 func (c *ChatService) Register(ep ports.Endpoint) error {
-	return c.notifier.Subscribe(ep)
+
+	err := c.presence.Join(ep)
+	if err != nil {
+		return errors.Join(err, fmt.Errorf("failed to join presence"))
+	}
+	err = c.notifier.Subscribe(ep)
+	if err != nil {
+		return errors.Join(err, fmt.Errorf("failed to subscribe notifications"))
+	}
+	return nil
 }
 
 // DeRegister unregisters an Endpoint in the chat service

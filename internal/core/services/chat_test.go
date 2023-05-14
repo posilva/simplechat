@@ -6,6 +6,7 @@ import (
 
 	"github.com/posilva/simplechat/internal/adapters/output/moderator"
 	"github.com/posilva/simplechat/internal/adapters/output/notifier"
+	"github.com/posilva/simplechat/internal/adapters/output/presence"
 	"github.com/posilva/simplechat/internal/adapters/output/registry"
 	"github.com/posilva/simplechat/internal/adapters/output/repository"
 	"github.com/posilva/simplechat/internal/core/domain"
@@ -108,7 +109,10 @@ func newChatService(t *testing.T) *ChatService {
 
 	m := moderator.NewIgnoreModerator()
 
-	cs := NewChatService(r, n, m)
+	ps, err := presence.NewRedisPresence(presence.DefaultLocalOpts())
+
+	cs := NewChatService(r, n, m, ps)
+	assert.NoError(t, err)
 
 	assert.NotNil(t, cs)
 

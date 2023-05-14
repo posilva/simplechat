@@ -56,8 +56,8 @@ func (p *RedisPresence) doJoin(ep ports.Endpoint) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	key := fmt.Sprintf("room::%s", ep.Room())
-	f := fmt.Sprintf("id::" + ep.ID())
+	key := key(ep.Room())
+	f := idField(ep.ID())
 	v := fmt.Sprintf("%d", time.Now().UTC().Unix())
 
 	cmd := p.client.B().Hsetnx().Key(key).Field(f).Value(v).Build()
@@ -68,12 +68,29 @@ func (p *RedisPresence) doJoin(ep ports.Endpoint) error {
 	return nil
 }
 
+// InRoom returns the participants of a room
+func (p *RedisPresence) InRoom(room string) (v map[string]string, err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	key := key(room)
+
+	cmd := p.client.B().Hgetall().Key(key).Build()
+	res, err := p.client.Do(ctx, cmd).AsStrMap()
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to set field value in redis presence: %v", err)
+	}
+
+	return res, nil
+
+}
+
 func (p *RedisPresence) doLeave(ep ports.Endpoint) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	key := fmt.Sprintf("room::%s", ep.Room())
-	f := fmt.Sprintf("id::" + ep.ID())
+	key := key(ep.Room())
+	f := idField(ep.ID())
 
 	cmd := p.client.B().Hdel().Key(key).Field(f).Build()
 	err := p.client.Do(ctx, cmd).Error()
@@ -81,4 +98,12 @@ func (p *RedisPresence) doLeave(ep ports.Endpoint) error {
 		return fmt.Errorf("failed to set field value in redis presence: %v", err)
 	}
 	return nil
+}
+
+func key(room string) string {
+	return fmt.Sprintf("room::%s", room)
+}
+
+func idField(id string) string {
+	return fmt.Sprintf("id::" + id)
 }
