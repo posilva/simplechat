@@ -39,6 +39,8 @@ type Moderator interface {
 
 // Registry defines the interface of a endpoint registries
 type Registry interface {
+	// TODO: this may a generic Notication message as we may notify more than
+	// Chat messages (Presence status updates, joins, leaves)
 	Notify(m domain.ModeratedMessage)
 	Register(ep Endpoint) error
 	DeRegister(ep Endpoint) error
@@ -46,7 +48,9 @@ type Registry interface {
 
 // Receiver define the interface to receive messages
 type Receiver interface {
-	Receive(m domain.ModeratedMessage)
+	// TODO: this may a generic Notication message as we may notify more than
+	// Chat messages (Presence status updates, joins, leaves)
+	Receive(domain.ModeratedMessage)
 	Recover()
 }
 
@@ -55,4 +59,20 @@ type Endpoint interface {
 	Receiver
 	ID() string
 	Room() string
+}
+
+// Presence defines an interface to a presence component
+type Presence interface {
+	Join(ep Endpoint) error
+	Leave(ep Endpoint) error
+	// TODO: may introduce later the Participant
+	InRoom(room string) ([]string, error)
+}
+
+// Message defines the basic interface of any message in the system
+type Message interface {
+	From() string
+	To() string
+	// TODO: Payload may be later a []byte
+	Payload() string
 }
