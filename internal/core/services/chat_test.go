@@ -98,7 +98,7 @@ func TestChatService_DeRegister(t *testing.T) {
 }
 
 func newChatService(t *testing.T) *ChatService {
-	r, err := repository.NewDynamoDBRepository(repository.DefaultiLocalAWSClientConfig(), testutils.DynamoDBLocalTableName)
+	r, err := repository.NewDynamoDBRepository(repository.DefaultLocalAWSClientConfig(), testutils.DynamoDBLocalTableName)
 	assert.NoError(t, err)
 
 	reg := registry.NewInMemoryRegistry()

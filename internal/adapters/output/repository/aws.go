@@ -9,8 +9,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 )
 
-// DefaultiLocalAWSClientConfig returns the default local AWS config
-func DefaultiLocalAWSClientConfig() aws.Config {
+// DefaultLocalAWSClientConfig returns the default local AWS config
+func DefaultLocalAWSClientConfig() aws.Config {
 
 	host := "http://localhost:4566" // default value pointing for local stack
 	region := "us-east-1"

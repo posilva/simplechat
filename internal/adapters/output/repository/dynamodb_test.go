@@ -15,7 +15,7 @@ const (
 
 func TestNewDynamoDBRepository(t *testing.T) {
 
-	r, err := NewDynamoDBRepository(DefaultiLocalAWSClientConfig(), localTableName)
+	r, err := NewDynamoDBRepository(DefaultLocalAWSClientConfig(), localTableName)
 
 	expType := &DynamoDBRepository{}
 	assert.NoError(t, err)
@@ -23,7 +23,7 @@ func TestNewDynamoDBRepository(t *testing.T) {
 }
 
 func TestDynamoDBRepository_Store(t *testing.T) {
-	r, err := NewDynamoDBRepository(DefaultiLocalAWSClientConfig(), localTableName)
+	r, err := NewDynamoDBRepository(DefaultLocalAWSClientConfig(), localTableName)
 	assert.NoError(t, err)
 
 	id1 := testutils.NewID()
@@ -44,7 +44,7 @@ func TestDynamoDBRepository_Store(t *testing.T) {
 }
 
 func TestDynamoDBRepository_Fetch(t *testing.T) {
-	r, err := NewDynamoDBRepository(DefaultiLocalAWSClientConfig(), localTableName)
+	r, err := NewDynamoDBRepository(DefaultLocalAWSClientConfig(), localTableName)
 	assert.NoError(t, err)
 	id1 := testutils.NewID()
 
