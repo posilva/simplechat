@@ -1,4 +1,4 @@
-.PHONY: fmt test cover infra-up infra-up infra-test infra-local infra-local-down infra-upd lint
+.PHONY: run fmt test cover infra-up infra-up infra-test infra-local infra-local-down infra-upd lint
 
 # This assumes tflocal is installed https://github.com/localstack/terraform-local
 
@@ -25,7 +25,7 @@ infra-local-down:
 	cd terraform && export TF_LOG=INFO && tflocal destroy -auto-approve
 
 fmt:
-	go fmt && cd terraform && terraform fmt
+	go fmt ./... && cd terraform && terraform fmt
 
 lint: 
 	golangci-lint run
@@ -35,3 +35,6 @@ test:
 
 cover: test
 	go tool cover -html=cover.out -o coverage.html
+
+run: fmt lint
+	go run ./cmd/simplechat/main.go
