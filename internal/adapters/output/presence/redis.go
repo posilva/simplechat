@@ -68,8 +68,8 @@ func (p *RedisPresence) doJoin(ep ports.Endpoint) error {
 	return nil
 }
 
-// InRoom returns the participants of a room
-func (p *RedisPresence) InRoom(room string) (v map[string]string, err error) {
+// Presents returns the participants of a room
+func (p *RedisPresence) Presents(room string) (v map[string]string, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	key := key(room)
@@ -82,9 +82,23 @@ func (p *RedisPresence) InRoom(room string) (v map[string]string, err error) {
 	}
 
 	return res, nil
-
 }
 
+// IsPresent returns true if a id is present in the room
+func (p *RedisPresence) IsPresent(ep ports.Endpoint) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	key := key(ep.Room())
+	f := idField(ep.ID())
+
+	cmd := p.client.B().Hexists().Key(key).Field(f).Build()
+	b, err := p.client.Do(ctx, cmd).AsBool()
+	if err != nil {
+		return false, fmt.Errorf("failed check if endpoint is present: %v", err)
+	}
+	return b, err
+}
 func (p *RedisPresence) doLeave(ep ports.Endpoint) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()

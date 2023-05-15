@@ -36,6 +36,20 @@ func (m *MockChatService) EXPECT() *MockChatServiceMockRecorder {
 	return m.recorder
 }
 
+// DeRegister mocks base method.
+func (m *MockChatService) DeRegister(ep ports.Endpoint) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeRegister", ep)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeRegister indicates an expected call of DeRegister.
+func (mr *MockChatServiceMockRecorder) DeRegister(ep interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeRegister", reflect.TypeOf((*MockChatService)(nil).DeRegister), ep)
+}
+
 // History mocks base method.
 func (m *MockChatService) History(dst string, since time.Duration) ([]*domain.ModeratedMessage, error) {
 	m.ctrl.T.Helper()
@@ -51,28 +65,18 @@ func (mr *MockChatServiceMockRecorder) History(dst, since interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "History", reflect.TypeOf((*MockChatService)(nil).History), dst, since)
 }
 
-// Login mocks base method.
-func (m *MockChatService) Login(ep ports.Endpoint) {
+// Register mocks base method.
+func (m *MockChatService) Register(ep ports.Endpoint) error {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Login", ep)
+	ret := m.ctrl.Call(m, "Register", ep)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// Login indicates an expected call of Login.
-func (mr *MockChatServiceMockRecorder) Login(ep interface{}) *gomock.Call {
+// Register indicates an expected call of Register.
+func (mr *MockChatServiceMockRecorder) Register(ep interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockChatService)(nil).Login), ep)
-}
-
-// Logout mocks base method.
-func (m *MockChatService) Logout(ep ports.Endpoint) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Logout", ep)
-}
-
-// Logout indicates an expected call of Logout.
-func (mr *MockChatServiceMockRecorder) Logout(ep interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Logout", reflect.TypeOf((*MockChatService)(nil).Logout), ep)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Register", reflect.TypeOf((*MockChatService)(nil).Register), ep)
 }
 
 // Send mocks base method.
@@ -331,15 +335,15 @@ func (m *MockReceiver) EXPECT() *MockReceiverMockRecorder {
 }
 
 // Receive mocks base method.
-func (m_2 *MockReceiver) Receive(m domain.ModeratedMessage) {
-	m_2.ctrl.T.Helper()
-	m_2.ctrl.Call(m_2, "Receive", m)
+func (m *MockReceiver) Receive(arg0 domain.ModeratedMessage) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Receive", arg0)
 }
 
 // Receive indicates an expected call of Receive.
-func (mr *MockReceiverMockRecorder) Receive(m interface{}) *gomock.Call {
+func (mr *MockReceiverMockRecorder) Receive(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Receive", reflect.TypeOf((*MockReceiver)(nil).Receive), m)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Receive", reflect.TypeOf((*MockReceiver)(nil).Receive), arg0)
 }
 
 // Recover mocks base method.
@@ -392,15 +396,15 @@ func (mr *MockEndpointMockRecorder) ID() *gomock.Call {
 }
 
 // Receive mocks base method.
-func (m_2 *MockEndpoint) Receive(m domain.ModeratedMessage) {
-	m_2.ctrl.T.Helper()
-	m_2.ctrl.Call(m_2, "Receive", m)
+func (m *MockEndpoint) Receive(arg0 domain.ModeratedMessage) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Receive", arg0)
 }
 
 // Receive indicates an expected call of Receive.
-func (mr *MockEndpointMockRecorder) Receive(m interface{}) *gomock.Call {
+func (mr *MockEndpointMockRecorder) Receive(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Receive", reflect.TypeOf((*MockEndpoint)(nil).Receive), m)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Receive", reflect.TypeOf((*MockEndpoint)(nil).Receive), arg0)
 }
 
 // Recover mocks base method.
@@ -427,4 +431,85 @@ func (m *MockEndpoint) Room() string {
 func (mr *MockEndpointMockRecorder) Room() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Room", reflect.TypeOf((*MockEndpoint)(nil).Room))
+}
+
+// MockPresence is a mock of Presence interface.
+type MockPresence struct {
+	ctrl     *gomock.Controller
+	recorder *MockPresenceMockRecorder
+}
+
+// MockPresenceMockRecorder is the mock recorder for MockPresence.
+type MockPresenceMockRecorder struct {
+	mock *MockPresence
+}
+
+// NewMockPresence creates a new mock instance.
+func NewMockPresence(ctrl *gomock.Controller) *MockPresence {
+	mock := &MockPresence{ctrl: ctrl}
+	mock.recorder = &MockPresenceMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockPresence) EXPECT() *MockPresenceMockRecorder {
+	return m.recorder
+}
+
+// IsPresent mocks base method.
+func (m *MockPresence) IsPresent(ep ports.Endpoint) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsPresent", ep)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsPresent indicates an expected call of IsPresent.
+func (mr *MockPresenceMockRecorder) IsPresent(ep interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsPresent", reflect.TypeOf((*MockPresence)(nil).IsPresent), ep)
+}
+
+// Join mocks base method.
+func (m *MockPresence) Join(ep ports.Endpoint) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Join", ep)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Join indicates an expected call of Join.
+func (mr *MockPresenceMockRecorder) Join(ep interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Join", reflect.TypeOf((*MockPresence)(nil).Join), ep)
+}
+
+// Leave mocks base method.
+func (m *MockPresence) Leave(ep ports.Endpoint) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Leave", ep)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Leave indicates an expected call of Leave.
+func (mr *MockPresenceMockRecorder) Leave(ep interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Leave", reflect.TypeOf((*MockPresence)(nil).Leave), ep)
+}
+
+// Presents mocks base method.
+func (m *MockPresence) Presents(room string) (map[string]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Presents", room)
+	ret0, _ := ret[0].(map[string]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Presents indicates an expected call of Presents.
+func (mr *MockPresenceMockRecorder) Presents(room interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Presents", reflect.TypeOf((*MockPresence)(nil).Presents), room)
 }

@@ -105,3 +105,12 @@ func (r *TestReceiver) Recover() {
 func (r *TestReceiver) Channel() chan domain.ModeratedMessage {
 	return r.ch
 }
+
+// NewSimpleEndpoint returns an endpoint with a default receiver and a new generated ID
+func NewSimpleEndpoint(room string) ports.Endpoint {
+	id := NewID()
+	rc := NewTestReceiver()
+	ep := NewTestEndpoint(id, room, rc)
+	return ep
+
+}

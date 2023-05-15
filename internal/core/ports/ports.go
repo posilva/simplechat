@@ -66,13 +66,6 @@ type Presence interface {
 	Join(ep Endpoint) error
 	Leave(ep Endpoint) error
 	// TODO: may introduce later the Participant
-	InRoom(room string) (v map[string]string, err error)
-}
-
-// Message defines the basic interface of any message in the system
-type Message interface {
-	From() string
-	To() string
-	// TODO: Payload may be later a []byte
-	Payload() string
+	Presents(room string) (v map[string]string, err error)
+	IsPresent(ep Endpoint) (bool, error)
 }

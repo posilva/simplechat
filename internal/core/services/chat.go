@@ -31,7 +31,6 @@ func NewChatService(repo ports.Repository, notif ports.Notifier, mod ports.Moder
 
 // Register registers an Endpoint in the chat service
 func (c *ChatService) Register(ep ports.Endpoint) error {
-
 	err := c.presence.Join(ep)
 	if err != nil {
 		return errors.Join(err, fmt.Errorf("failed to join presence"))
