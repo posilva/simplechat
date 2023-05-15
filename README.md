@@ -94,6 +94,8 @@ sequenceDiagram
 - [ ] Add deployment on ECS 
 - [ ] Add deployment on K8S
 - [ ] Add deployment on Nomad
+- [ ] Explore coverage report in Github [https://github.com/johejo/go-cover-view]
+
 
 # FIX
 
