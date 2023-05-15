@@ -28,7 +28,7 @@ type Repository interface {
 type Notifier interface {
 	Subscribe(ep Endpoint) error
 	Unsubscribe(ep Endpoint) error
-	Broadcast(m domain.ModeratedMessage) error
+	Broadcast(n domain.Notication) error
 }
 
 // Moderator defines the interface to handle with
@@ -39,18 +39,14 @@ type Moderator interface {
 
 // Registry defines the interface of a endpoint registries
 type Registry interface {
-	// TODO: this may a generic Notication message as we may notify more than
-	// Chat messages (Presence status updates, joins, leaves)
-	Notify(m domain.ModeratedMessage)
+	Notify(n domain.Notication)
 	Register(ep Endpoint) error
 	DeRegister(ep Endpoint) error
 }
 
 // Receiver define the interface to receive messages
 type Receiver interface {
-	// TODO: this may a generic Notication message as we may notify more than
-	// Chat messages (Presence status updates, joins, leaves)
-	Receive(domain.ModeratedMessage)
+	Receive(n domain.Notication)
 	Recover()
 }
 
