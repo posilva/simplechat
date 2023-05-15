@@ -1,4 +1,4 @@
-.PHONY: run fmt test cover infra-up infra-up infra-test infra-local infra-local-down infra-upd lint
+.PHONY: run fmt test cover infra-up infra-up infra-test infra-local infra-local-down infra-upd lint setup
 
 # This assumes tflocal is installed https://github.com/localstack/terraform-local
 
@@ -38,3 +38,5 @@ cover: test
 
 run: fmt lint
 	go run ./cmd/simplechat/main.go
+
+setup:  infra-upd infra-local run 

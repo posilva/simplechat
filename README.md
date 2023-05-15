@@ -17,6 +17,11 @@ Simple Chat service using Hexagonal Architecture with Go
 
 ## Use Makefile targets
 
+Short version if you have all the tools installed and configured (never happens :) )
+(it will start a local web page http://localhost:8081 that you can connect to play with chat)
+
+`make setup`
+
 Create containers to run the service with docker compose
 
 `make infra-up`
