@@ -57,7 +57,12 @@ func (c *ChatService) Send(m domain.Message) error {
 	if err != nil {
 		return errors.Join(fmt.Errorf("failed to store message: %v", err))
 	}
-	err = c.notifier.Broadcast(*mm)
+
+	err = c.notifier.Broadcast(domain.Notication{
+		Payload: mm,
+		Kind:    domain.ModeratedMessageKind,
+		To:      mm.To,
+	})
 	if err != nil {
 		return errors.Join(fmt.Errorf("failed to broadcast message: %v", err))
 	}

@@ -83,7 +83,8 @@ func (h *WebSockerHandler) Handle(ctx *gin.Context) {
 	}()
 
 	for mm := range rc.Channel() {
-		m, err := encode(mm.Message)
+
+		m, err := encode(mm)
 		if err != nil {
 			_, _ = fmt.Printf("failed to encode message: %v", err)
 			break

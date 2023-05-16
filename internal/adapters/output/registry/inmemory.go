@@ -28,10 +28,17 @@ func NewInMemoryRegistry() *InMemoryRegistry {
 }
 
 // Notify all the endpoits registered in a room
-func (r *InMemoryRegistry) Notify(m domain.ModeratedMessage) {
+func (r *InMemoryRegistry) Notify(m domain.Notication) {
 	if s, ok := r.roomsMap[m.To]; ok {
 		for _, v := range s {
-			v.Receive(m)
+			go func(m domain.Notication, v ports.Endpoint) {
+				defer func() {
+					if rr := recover(); rr != nil {
+						v.Recover()
+					}
+				}()
+				v.Receive(m)
+			}(m, v)
 		}
 	}
 }

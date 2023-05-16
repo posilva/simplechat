@@ -30,7 +30,7 @@ func (ep *clientEndpoint) Room() string {
 }
 
 // Receive implements the Receiver interface
-func (ep *clientEndpoint) Receive(m domain.ModeratedMessage) {
+func (ep *clientEndpoint) Receive(m domain.Notication) {
 	ep.receiver.Receive(m)
 }
 
@@ -41,20 +41,20 @@ func (ep *clientEndpoint) Recover() {
 
 // clientReceiver represents a Receiver interface used for Tests
 type clientReceiver struct {
-	ch chan domain.ModeratedMessage
+	ch chan domain.Notication
 	f  func()
 }
 
 // newclientReceiver creates a test receiver with a channel for tests
 func newclientReceiver() *clientReceiver {
 	return &clientReceiver{
-		ch: make(chan domain.ModeratedMessage, 1),
+		ch: make(chan domain.Notication, 1),
 		f:  func() {},
 	}
 }
 
 // Receive is called every time a message should be delivered
-func (r *clientReceiver) Receive(m domain.ModeratedMessage) {
+func (r *clientReceiver) Receive(m domain.Notication) {
 	r.f()
 	r.ch <- m
 }
@@ -65,6 +65,6 @@ func (r *clientReceiver) Recover() {
 }
 
 // Channel returns the channel used internally for communication
-func (r *clientReceiver) Channel() chan domain.ModeratedMessage {
+func (r *clientReceiver) Channel() chan domain.Notication {
 	return r.ch
 }

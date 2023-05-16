@@ -6,6 +6,7 @@ import (
 
 	"github.com/posilva/simplechat/internal/adapters/output/moderator"
 	"github.com/posilva/simplechat/internal/adapters/output/notifier"
+	"github.com/posilva/simplechat/internal/adapters/output/notifier/codecs"
 	"github.com/posilva/simplechat/internal/adapters/output/presence"
 	"github.com/posilva/simplechat/internal/adapters/output/registry"
 	"github.com/posilva/simplechat/internal/adapters/output/repository"
@@ -23,14 +24,12 @@ func TestNewChatService(t *testing.T) {
 func TestChatService_Send(t *testing.T) {
 	cs := newChatService(t)
 
-	topic := testutils.NewUnique(testutils.Name(t))
+	room := testutils.NewUnique(testutils.Name(t))
 
 	payload := "TestChatService_Send Message"
 
-	rc := testutils.NewTestReceiver()
-
-	ep1 := testutils.NewTestEndpoint(testutils.NewID(), topic, rc)
-	ep2 := testutils.NewTestEndpoint(testutils.NewID(), topic, rc)
+	ep1 := testutils.NewSimpleEndpoint(room)
+	ep2 := testutils.NewSimpleEndpoint(room)
 
 	err := cs.Register(ep1)
 	assert.NoError(t, err)
@@ -39,14 +38,15 @@ func TestChatService_Send(t *testing.T) {
 
 	msg := domain.Message{
 		From:    ep1.ID(),
-		To:      topic,
+		To:      room,
 		Payload: payload,
 	}
 	err = cs.Send(msg)
 	assert.NoError(t, err)
 
-	m1 := <-rc.Channel()
-	assert.Equal(t, msg, m1.Message)
+	m1 := <-ep1.Channel()
+	m := m1.Payload.(domain.ModeratedMessage)
+	assert.Equal(t, msg, m.Message)
 }
 
 func TestChatService_History(t *testing.T) {
@@ -74,25 +74,19 @@ func TestChatService_History(t *testing.T) {
 }
 func TestChatService_Register(t *testing.T) {
 	cs := newChatService(t)
-
-	topic := testutils.NewUnique(testutils.Name(t))
-
-	rc := testutils.NewTestReceiver()
-	ep1 := testutils.NewTestEndpoint(testutils.NewID(), topic, rc)
+	room := testutils.NewUnique(testutils.Name(t))
+	ep1 := testutils.NewSimpleEndpoint(room)
 
 	err := cs.Register(ep1)
 	assert.NoError(t, err)
-
 }
 
 func TestChatService_DeRegister(t *testing.T) {
 
 	cs := newChatService(t)
 
-	topic := testutils.NewUnique(testutils.Name(t))
-
-	rc := testutils.NewTestReceiver()
-	ep1 := testutils.NewTestEndpoint(testutils.NewID(), topic, rc)
+	room := testutils.NewUnique(testutils.Name(t))
+	ep1 := testutils.NewSimpleEndpoint(room)
 
 	err := cs.DeRegister(ep1)
 	assert.NoError(t, err)
@@ -104,7 +98,7 @@ func newChatService(t *testing.T) *ChatService {
 
 	reg := registry.NewInMemoryRegistry()
 
-	n, err := notifier.NewRabbitMQNotifierWithLocal(testutils.RabbitMQLocalURL, reg)
+	n, err := notifier.NewRabbitMQNotifierWithLocal[*codecs.JSONNotifierCodec](testutils.RabbitMQLocalURL, reg)
 	assert.NoError(t, err)
 
 	m := moderator.NewIgnoreModerator()

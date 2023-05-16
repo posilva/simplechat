@@ -12,8 +12,10 @@ import (
 const (
 	// DynamoDBLocalTableName defines the DynamoDB table name for local development with LocalStack
 	DynamoDBLocalTableName string = "local-dev-dev-simplechat"
-	// RabbitMQLocalURL defines the local url to connect to Rabbit MQ running in docker
+	// RabbitMQLocalURL defines the local url to connect to Rabbit MQ
 	RabbitMQLocalURL string = "amqp://guest:guest@localhost:5672/"
+	// RabbitMQLocalURLSSL defines the local url to connect to Rabbit MQ using SSL
+	RabbitMQLocalURLSSL string = "amqps://guest:guest@localhost:5671/"
 )
 
 // Name returns the name of the test
@@ -38,13 +40,28 @@ type TestEndpoint struct {
 	room     string
 }
 
-// NewTestEndpoint creates a new test endpoint
-func NewTestEndpoint(id string, room string, receiver ports.Receiver) *TestEndpoint {
+// NewTestEndpointWithReceiver creates a test endpoint with a passed receiver
+func NewTestEndpointWithReceiver(id string, room string, r ports.Receiver) *TestEndpoint {
 	return &TestEndpoint{
-		receiver,
-		id,
-		room,
+		receiver: r,
+		id:       id,
+		room:     room,
 	}
+}
+
+// NewTestEndpoint creates a new test endpoint with default test receiver
+func NewTestEndpoint(id string, room string) *TestEndpoint {
+	return &TestEndpoint{
+		receiver: NewTestReceiver(),
+		id:       id,
+		room:     room,
+	}
+}
+
+// Channel returns the channel from the internal receiver
+func (ep *TestEndpoint) Channel() chan domain.Notication {
+	r := ep.receiver
+	return r.(*TestReceiver).ch
 }
 
 // ID returns the id of the endpoint
@@ -58,7 +75,7 @@ func (ep *TestEndpoint) Room() string {
 }
 
 // Receive implements the Receiver interface
-func (ep *TestEndpoint) Receive(m domain.ModeratedMessage) {
+func (ep *TestEndpoint) Receive(m domain.Notication) {
 	ep.receiver.Receive(m)
 }
 
@@ -69,7 +86,7 @@ func (ep *TestEndpoint) Recover() {
 
 // TestReceiver represents a Receiver interface used for Tests
 type TestReceiver struct {
-	ch chan domain.ModeratedMessage
+	ch chan domain.Notication
 	f  func()
 }
 
@@ -77,7 +94,7 @@ type TestReceiver struct {
 // used to generate panic
 func NewTestReceiverWithFunc(f func()) *TestReceiver {
 	return &TestReceiver{
-		ch: make(chan domain.ModeratedMessage, 1),
+		ch: make(chan domain.Notication, 1),
 		f:  f,
 	}
 }
@@ -85,13 +102,13 @@ func NewTestReceiverWithFunc(f func()) *TestReceiver {
 // NewTestReceiver creates a test receiver with a channel for tests
 func NewTestReceiver() *TestReceiver {
 	return &TestReceiver{
-		ch: make(chan domain.ModeratedMessage, 1),
+		ch: make(chan domain.Notication, 1),
 		f:  func() {},
 	}
 }
 
 // Receive is called every time a message should be delivered
-func (r *TestReceiver) Receive(m domain.ModeratedMessage) {
+func (r *TestReceiver) Receive(m domain.Notication) {
 	r.f()
 	r.ch <- m
 }
@@ -102,15 +119,14 @@ func (r *TestReceiver) Recover() {
 }
 
 // Channel returns the channel used internally for communication
-func (r *TestReceiver) Channel() chan domain.ModeratedMessage {
+func (r *TestReceiver) Channel() chan domain.Notication {
 	return r.ch
 }
 
 // NewSimpleEndpoint returns an endpoint with a default receiver and a new generated ID
-func NewSimpleEndpoint(room string) ports.Endpoint {
+func NewSimpleEndpoint(room string) *TestEndpoint {
 	id := NewID()
-	rc := NewTestReceiver()
-	ep := NewTestEndpoint(id, room, rc)
+	ep := NewTestEndpoint(id, room)
 	return ep
 
 }

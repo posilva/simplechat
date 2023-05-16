@@ -31,7 +31,7 @@ lint:
 	golangci-lint run
 
 test:
-	go test -v ./... -covermode=count -coverprofile=cover.out && go tool cover -func=cover.out
+	go test -timeout 10000ms -v ./... -covermode=count -coverprofile=cover.out && go tool cover -func=cover.out
 
 cover: test
 	go tool cover -html=cover.out -o coverage.html

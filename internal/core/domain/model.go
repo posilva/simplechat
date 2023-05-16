@@ -20,9 +20,9 @@ const (
 
 // Notication represents a general notification message
 type Notication struct {
-	Kind    NoticationKind
+	Payload interface{}
 	To      string
-	Payload []byte
+	Kind    NoticationKind
 }
 
 // PresenceUpdateAction type of PresenceUpdates

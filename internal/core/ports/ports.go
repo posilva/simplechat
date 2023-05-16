@@ -65,3 +65,9 @@ type Presence interface {
 	Presents(room string) (v map[string]string, err error)
 	IsPresent(ep Endpoint) (bool, error)
 }
+
+// NotifierCodec defines the interface of a codec
+type NotifierCodec interface {
+	Encode(domain.Notication) ([]byte, error)
+	Decode([]byte, *domain.Notication) error
+}

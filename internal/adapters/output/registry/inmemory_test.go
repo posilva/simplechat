@@ -20,16 +20,13 @@ func TestInMemoryRegistry_Register(t *testing.T) {
 	r := NewInMemoryRegistry()
 	assert.NotNil(t, r)
 
-	id := testutil.NewID()
-	id2 := testutil.NewID()
 	room := testutil.NewUnique(testutil.Name(t))
-	rc := testutil.NewTestReceiver()
 
-	ep := testutil.NewTestEndpoint(id, room, rc)
+	ep := testutil.NewSimpleEndpoint(room)
 	err := r.Register(ep)
 	assert.NoError(t, err)
 
-	ep2 := testutil.NewTestEndpoint(id2, room, rc)
+	ep2 := testutil.NewSimpleEndpoint(room)
 	err = r.Register(ep2)
 	assert.NoError(t, err)
 }
@@ -37,11 +34,9 @@ func TestInMemoryRegistry_DeRegister(t *testing.T) {
 	r := NewInMemoryRegistry()
 	assert.NotNil(t, r)
 
-	id := testutil.NewID()
 	room := testutil.NewUnique(testutil.Name(t))
-	rc := testutil.NewTestReceiver()
 
-	ep := testutil.NewTestEndpoint(id, room, rc)
+	ep := testutil.NewSimpleEndpoint(room)
 	err := r.Register(ep)
 	assert.NoError(t, err)
 	err = r.DeRegister(ep)
@@ -51,25 +46,27 @@ func TestInMemoryRegistry_Notify(t *testing.T) {
 	r := NewInMemoryRegistry()
 	assert.NotNil(t, r)
 
-	id := testutil.NewID()
 	room := testutil.NewUnique(testutil.Name(t))
-	rc := testutil.NewTestReceiver()
 
-	ep := testutil.NewTestEndpoint(id, room, rc)
+	ep := testutil.NewSimpleEndpoint(room)
 	err := r.Register(ep)
 	assert.NoError(t, err)
 
-	m := domain.ModeratedMessage{
-		Message: domain.Message{
-			Payload: testutil.Name(t),
-			From:    id,
-			To:      room,
+	m := domain.Notication{
+		Kind: domain.ModeratedMessageKind,
+		To:   room,
+		Payload: domain.ModeratedMessage{
+			Message: domain.Message{
+				Payload: testutil.Name(t),
+				From:    ep.ID(),
+				To:      room,
+			},
+			Level:           0,
+			FilteredPayload: testutil.Name(t),
 		},
-		Level:           0,
-		FilteredPayload: testutil.Name(t),
 	}
 	r.Notify(m)
 
-	mm := <-rc.Channel()
+	mm := <-ep.Channel()
 	assert.Equal(t, mm, m)
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/posilva/simplechat/internal/adapters/input/handler"
 	"github.com/posilva/simplechat/internal/adapters/output/moderator"
 	"github.com/posilva/simplechat/internal/adapters/output/notifier"
+	"github.com/posilva/simplechat/internal/adapters/output/notifier/codecs"
 	"github.com/posilva/simplechat/internal/adapters/output/presence"
 	"github.com/posilva/simplechat/internal/adapters/output/registry"
 	"github.com/posilva/simplechat/internal/adapters/output/repository"
@@ -55,7 +56,7 @@ func createChat() (*services.ChatService, error) {
 		return nil, fmt.Errorf("failed to create repositort %v", err)
 	}
 	reg := registry.NewInMemoryRegistry()
-	notif, err := notifier.NewRabbitMQNotifierWithLocal(testutil.RabbitMQLocalURL, reg)
+	notif, err := notifier.NewRabbitMQNotifierWithLocal[*codecs.JSONNotifierCodec](testutil.RabbitMQLocalURL, reg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create notifier: %v", err)
 	}

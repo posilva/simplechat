@@ -4,7 +4,6 @@ package notifier
 import (
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -24,7 +23,8 @@ type subscriptionInfo struct {
 }
 
 // RabbitMQNotifier implements RabbitMQ based notifications
-type RabbitMQNotifier struct {
+type RabbitMQNotifier[T ports.NotifierCodec] struct {
+	codec         T
 	registry      ports.Registry
 	subscriptions map[string]subscriptionInfo
 	conn          *amqp.Connection
@@ -33,7 +33,7 @@ type RabbitMQNotifier struct {
 }
 
 // NewRabbitMQNotifierWithLocal creates a new instance for Local connection to RMQ
-func NewRabbitMQNotifierWithLocal(url string, r ports.Registry) (*RabbitMQNotifier, error) {
+func NewRabbitMQNotifierWithLocal[T ports.NotifierCodec](url string, r ports.Registry) (*RabbitMQNotifier[T], error) {
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err
@@ -44,7 +44,7 @@ func NewRabbitMQNotifierWithLocal(url string, r ports.Registry) (*RabbitMQNotifi
 		return nil, err
 	}
 
-	return &RabbitMQNotifier{
+	return &RabbitMQNotifier[T]{
 		registry:      r,
 		mu:            sync.Mutex{},
 		conn:          conn,
@@ -54,7 +54,7 @@ func NewRabbitMQNotifierWithLocal(url string, r ports.Registry) (*RabbitMQNotifi
 }
 
 // NewRabbitMQNotifierWithTLS creates a new instance for RMQ connection using TLS
-func NewRabbitMQNotifierWithTLS(url string, tls *tls.Config, r ports.Registry) (*RabbitMQNotifier, error) {
+func NewRabbitMQNotifierWithTLS[T ports.NotifierCodec](url string, tls *tls.Config, r ports.Registry) (*RabbitMQNotifier[T], error) {
 	conn, err := amqp.DialTLS(url, tls)
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func NewRabbitMQNotifierWithTLS(url string, tls *tls.Config, r ports.Registry) (
 		return nil, err
 	}
 
-	return &RabbitMQNotifier{
+	return &RabbitMQNotifier[T]{
 		registry:      r,
 		mu:            sync.Mutex{},
 		conn:          conn,
@@ -74,7 +74,7 @@ func NewRabbitMQNotifierWithTLS(url string, tls *tls.Config, r ports.Registry) (
 }
 
 // Broadcast message
-func (n *RabbitMQNotifier) Broadcast(m domain.ModeratedMessage) error {
+func (n *RabbitMQNotifier[T]) Broadcast(m domain.Notication) error {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
@@ -84,12 +84,11 @@ func (n *RabbitMQNotifier) Broadcast(m domain.ModeratedMessage) error {
 	defer cancel()
 
 	if _, ok := n.subscriptions[t]; ok {
-		//TODO: PMS: consider implementing a decoder
-		body, err := toJSON(m)
+		body, err := n.codec.Encode(m)
+
 		if err != nil {
 			return fmt.Errorf("failed to parse json: %s", err)
 		}
-
 		// TODO: PMS: check options later
 		err = n.ch.PublishWithContext(ctx,
 			t, // exchange
@@ -109,7 +108,7 @@ func (n *RabbitMQNotifier) Broadcast(m domain.ModeratedMessage) error {
 }
 
 // Subscribe to notifications
-func (n *RabbitMQNotifier) Subscribe(ep ports.Endpoint) error {
+func (n *RabbitMQNotifier[T]) Subscribe(ep ports.Endpoint) error {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	room := ep.Room()
@@ -139,13 +138,13 @@ func (n *RabbitMQNotifier) Subscribe(ep ports.Endpoint) error {
 }
 
 // Unsubscribe unsubscribes the endpoint to receive notificatoins
-func (n *RabbitMQNotifier) Unsubscribe(ep ports.Endpoint) error {
+func (n *RabbitMQNotifier[T]) Unsubscribe(ep ports.Endpoint) error {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	return n.registry.DeRegister(ep)
 }
 
-func (n *RabbitMQNotifier) createSubscription(queue string, r ports.Receiver) error {
+func (n *RabbitMQNotifier[T]) createSubscription(queue string, r ports.Receiver) error {
 
 	msgs, err := n.ch.Consume(
 		queue, // queue
@@ -169,19 +168,20 @@ func (n *RabbitMQNotifier) createSubscription(queue string, r ports.Receiver) er
 
 		// TODO: terminate this using a channel otherwise it will be a go routine leak
 		for d := range msgs {
-			m := domain.ModeratedMessage{}
-			err := json.Unmarshal(d.Body, &m)
 
+			m := domain.Notication{}
+
+			err := n.codec.Decode(d.Body, &m)
 			if err != nil {
+				// TODO add logger
 				continue
 			}
-
 			n.registry.Notify(m)
 		}
 	}()
 	return nil
 }
-func (n *RabbitMQNotifier) initTopic(t string) (string, error) {
+func (n *RabbitMQNotifier[T]) initTopic(t string) (string, error) {
 	// create the exchange
 	err := n.ch.ExchangeDeclare(
 		t,        // name
@@ -223,8 +223,4 @@ func (n *RabbitMQNotifier) initTopic(t string) (string, error) {
 
 func internalTopic(dst string) string {
 	return fmt.Sprintf("%s%s", topicPrefix, dst)
-}
-
-func toJSON(m domain.ModeratedMessage) ([]byte, error) {
-	return json.Marshal(m)
 }
