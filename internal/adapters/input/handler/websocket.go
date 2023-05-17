@@ -70,11 +70,13 @@ func (h *WebSockerHandler) Handle(ctx *gin.Context) {
 				_, _ = fmt.Printf("failed to decode message: %v", err)
 				break
 			}
+
 			err = h.chat.Send(m)
 			if err != nil {
 				_, _ = fmt.Printf("failed to send message to chat service: %v", err)
 				break
 			}
+
 		}
 	}()
 

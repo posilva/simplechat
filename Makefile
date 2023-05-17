@@ -4,10 +4,10 @@
 
 all: infra-down infra-up infra-test
 infra-upd:
-	cd Docker && docker-compose -f docker-compose.yaml up -d
+	cd Docker && docker-compose -f docker-compose.yaml up -d --remove-orphans
 
 infra-up:
-	cd Docker && docker-compose -f docker-compose.yaml up 
+	cd Docker && docker-compose -f docker-compose.yaml up --remove-orphans
 
 infra-down:
 	cd Docker && docker-compose -f docker-compose.yaml down 

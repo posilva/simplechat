@@ -82,7 +82,7 @@ sequenceDiagram
 - [x] Integrate a mock framework (gomock)
 - [ ] Separated UnitTest from Integration Tests (with local infra)
 - [x] Integrate Golang Linters
-- [ ] Implement WebSocket Handler 
+- [x] Implement WebSocket Handler 
 - [ ] Add CICD with Github Actions
 - [ ] Add Configuration (Consul, Vault)
 - [ ] Add logging 
