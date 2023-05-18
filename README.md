@@ -77,20 +77,20 @@ sequenceDiagram
 
 # TODO
  
-- [ ] Implement a Presence component that embeds the notification system
-- [ ] Improve tests that cover errors
+- [x] Implement a Presence component that embeds the notification system
 - [x] Integrate a mock framework (gomock)
-- [ ] Separated UnitTest from Integration Tests (with local infra)
+- [x] Add logging 
 - [x] Integrate Golang Linters
 - [x] Implement WebSocket Handler 
+- [x] Add Grafana, Prometheus to Docker Compose
+- [ ] Separated UnitTest from Integration Tests (with local infra)
+- [ ] Improve tests that cover errors
 - [ ] Add CICD with Github Actions
 - [ ] Add Configuration (Consul, Vault)
-- [ ] Add logging 
 - [ ] Add metricts 
 - [ ] Add rate limiting
 - [ ] Add Load Tests Local
 - [ ] Add Load Tests Cloud 
-- [ ] Add Grafana, Prometheus to Docker Compose
 - [ ] Add deployment on ECS 
 - [ ] Add deployment on K8S
 - [ ] Add deployment on Nomad
