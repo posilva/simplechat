@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"testing"
 
+	"github.com/posilva/simplechat/internal/adapters/output/logging"
 	"github.com/posilva/simplechat/internal/adapters/output/notifier/codecs"
 	"github.com/posilva/simplechat/internal/adapters/output/registry"
 	"github.com/posilva/simplechat/internal/core/domain"
@@ -153,9 +154,10 @@ func TestRabbitMQNotifier_Unsubscribe(t *testing.T) {
 }
 
 func newRabbitMQNotifier[T ports.NotifierCodec](secure bool) (*RabbitMQNotifier[T], error) {
-	reg := registry.NewInMemoryRegistry()
+	log := logging.NewSimpleLogger()
+	reg := registry.NewInMemoryRegistry(log)
 	if secure {
-		return NewRabbitMQNotifierWithTLS[T](testutils.RabbitMQLocalURLSSL, &tls.Config{InsecureSkipVerify: true}, reg)
+		return NewRabbitMQNotifierWithTLS[T](testutils.RabbitMQLocalURLSSL, &tls.Config{InsecureSkipVerify: true}, reg, log)
 	}
-	return NewRabbitMQNotifierWithLocal[T](testutils.RabbitMQLocalURL, reg)
+	return NewRabbitMQNotifierWithLocal[T](testutils.RabbitMQLocalURL, reg, log)
 }

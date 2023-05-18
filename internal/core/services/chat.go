@@ -16,16 +16,18 @@ type ChatService struct {
 	notifier   ports.Notifier
 	moderator  ports.Moderator
 	presence   ports.Presence
+	log        ports.Logger
 }
 
 // NewChatService creates a new instance of a chat service using
 // existing repository, notifier and moderator providers
-func NewChatService(repo ports.Repository, notif ports.Notifier, mod ports.Moderator, ps ports.Presence) *ChatService {
+func NewChatService(repo ports.Repository, notif ports.Notifier, mod ports.Moderator, ps ports.Presence, log ports.Logger) *ChatService {
 	return &ChatService{
 		repository: repo,
 		notifier:   notif,
 		moderator:  mod,
 		presence:   ps,
+		log:        log,
 	}
 }
 

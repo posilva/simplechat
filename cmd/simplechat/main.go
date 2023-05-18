@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/posilva/simplechat/internal/adapters/input/handler"
+	"github.com/posilva/simplechat/internal/adapters/output/logging"
 	"github.com/posilva/simplechat/internal/adapters/output/moderator"
 	"github.com/posilva/simplechat/internal/adapters/output/notifier"
 	"github.com/posilva/simplechat/internal/adapters/output/notifier/codecs"
@@ -51,21 +52,23 @@ func main() {
 }
 
 func createChat() (*services.ChatService, error) {
-	repo, err := repository.NewDynamoDBRepository(repository.DefaultLocalAWSClientConfig(), testutil.DynamoDBLocalTableName)
+	log := logging.NewSimpleLogger()
+	repo, err := repository.NewDynamoDBRepository(repository.DefaultLocalAWSClientConfig(), testutil.DynamoDBLocalTableName, log)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create repositort %v", err)
 	}
-	reg := registry.NewInMemoryRegistry()
-	notif, err := notifier.NewRabbitMQNotifierWithLocal[*codecs.JSONNotifierCodec](testutil.RabbitMQLocalURL, reg)
+
+	reg := registry.NewInMemoryRegistry(log)
+	notif, err := notifier.NewRabbitMQNotifierWithLocal[*codecs.JSONNotifierCodec](testutil.RabbitMQLocalURL, reg, log)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create notifier: %v", err)
 	}
 	mod := moderator.NewIgnoreModerator()
 
-	ps, err := presence.NewRedisPresence(presence.DefaultLocalOpts(), notif)
+	ps, err := presence.NewRedisPresence(presence.DefaultLocalOpts(), notif, log)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create presence: %v", err)
 	}
-	return services.NewChatService(repo, notif, mod, ps), nil
+	return services.NewChatService(repo, notif, mod, ps, log), nil
 
 }

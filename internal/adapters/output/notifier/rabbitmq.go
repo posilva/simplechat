@@ -25,6 +25,7 @@ type subscriptionInfo struct {
 // RabbitMQNotifier implements RabbitMQ based notifications
 type RabbitMQNotifier[T ports.NotifierCodec] struct {
 	codec         T
+	log           ports.Logger
 	registry      ports.Registry
 	subscriptions map[string]subscriptionInfo
 	conn          *amqp.Connection
@@ -33,7 +34,7 @@ type RabbitMQNotifier[T ports.NotifierCodec] struct {
 }
 
 // NewRabbitMQNotifierWithLocal creates a new instance for Local connection to RMQ
-func NewRabbitMQNotifierWithLocal[T ports.NotifierCodec](url string, r ports.Registry) (*RabbitMQNotifier[T], error) {
+func NewRabbitMQNotifierWithLocal[T ports.NotifierCodec](url string, r ports.Registry, log ports.Logger) (*RabbitMQNotifier[T], error) {
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err
@@ -50,11 +51,12 @@ func NewRabbitMQNotifierWithLocal[T ports.NotifierCodec](url string, r ports.Reg
 		conn:          conn,
 		ch:            ch,
 		subscriptions: map[string]subscriptionInfo{},
+		log:           log,
 	}, nil
 }
 
 // NewRabbitMQNotifierWithTLS creates a new instance for RMQ connection using TLS
-func NewRabbitMQNotifierWithTLS[T ports.NotifierCodec](url string, tls *tls.Config, r ports.Registry) (*RabbitMQNotifier[T], error) {
+func NewRabbitMQNotifierWithTLS[T ports.NotifierCodec](url string, tls *tls.Config, r ports.Registry, log ports.Logger) (*RabbitMQNotifier[T], error) {
 	conn, err := amqp.DialTLS(url, tls)
 	if err != nil {
 		return nil, err
@@ -70,6 +72,7 @@ func NewRabbitMQNotifierWithTLS[T ports.NotifierCodec](url string, tls *tls.Conf
 		conn:          conn,
 		ch:            ch,
 		subscriptions: map[string]subscriptionInfo{},
+		log:           log,
 	}, nil
 }
 
@@ -83,9 +86,7 @@ func (n *RabbitMQNotifier[T]) Broadcast(m domain.Notication) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	fmt.Println("Broadcast", t, m.UUID, n.subscriptions[t])
 	if _, ok := n.subscriptions[t]; ok {
-		fmt.Println("Broadcast 2", t, m.UUID)
 		body, err := n.codec.Encode(m)
 		if err != nil {
 			return fmt.Errorf("failed to parse json: %s", err)

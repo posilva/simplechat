@@ -14,16 +14,18 @@ type idSet map[string]ports.Endpoint
 
 // InMemoryRegistry implements an in memory registry
 type InMemoryRegistry struct {
+	log      ports.Logger
 	roomsMap map[string]idSet
 	idsMap   map[string]string
 	mu       sync.Mutex
 }
 
 // NewInMemoryRegistry creates a new in memory registry
-func NewInMemoryRegistry() *InMemoryRegistry {
+func NewInMemoryRegistry(log ports.Logger) *InMemoryRegistry {
 	return &InMemoryRegistry{
 		idsMap:   make(map[string]string),
 		roomsMap: make(map[string]idSet),
+		log:      log,
 	}
 }
 

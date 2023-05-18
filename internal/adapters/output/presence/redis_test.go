@@ -4,6 +4,7 @@ package presence
 import (
 	"testing"
 
+	"github.com/posilva/simplechat/internal/adapters/output/logging"
 	"github.com/posilva/simplechat/internal/adapters/output/notifier"
 	"github.com/posilva/simplechat/internal/adapters/output/notifier/codecs"
 
@@ -13,10 +14,11 @@ import (
 )
 
 func newPresence(t *testing.T) *RedisPresence {
-	registry := registry.NewInMemoryRegistry()
-	notifier, err := notifier.NewRabbitMQNotifierWithLocal[*codecs.JSONNotifierCodec](testutil.RabbitMQLocalURL, registry)
+	log := logging.NewSimpleLogger()
+	registry := registry.NewInMemoryRegistry(log)
+	notifier, err := notifier.NewRabbitMQNotifierWithLocal[*codecs.JSONNotifierCodec](testutil.RabbitMQLocalURL, registry, log)
 	assert.NoError(t, err)
-	ps, err := NewRedisPresence(DefaultLocalOpts(), notifier)
+	ps, err := NewRedisPresence(DefaultLocalOpts(), notifier, log)
 	assert.NoError(t, err)
 	return ps
 }

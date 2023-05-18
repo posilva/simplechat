@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/posilva/simplechat/internal/core/domain"
+	"github.com/posilva/simplechat/internal/core/ports"
 )
 
 const (
@@ -39,16 +40,18 @@ type messageRecord struct {
 
 // DynamoDBRepository implements Repository interface for DynamoDB
 type DynamoDBRepository struct {
+	log       ports.Logger
 	client    *dynamodb.Client
 	tableName string
 }
 
 // NewDynamoDBRepository creates a new DynamoDB repository
-func NewDynamoDBRepository(cfg aws.Config, table string) (*DynamoDBRepository, error) {
+func NewDynamoDBRepository(cfg aws.Config, table string, log ports.Logger) (*DynamoDBRepository, error) {
 	c := dynamodb.NewFromConfig(cfg)
 	return &DynamoDBRepository{
 		client:    c,
 		tableName: table,
+		log:       log,
 	}, nil
 }
 

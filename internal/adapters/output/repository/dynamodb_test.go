@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/posilva/simplechat/internal/adapters/output/logging"
 	"github.com/posilva/simplechat/internal/core/domain"
 	testutils "github.com/posilva/simplechat/internal/testutil"
 	"github.com/stretchr/testify/assert"
@@ -14,17 +15,14 @@ const (
 )
 
 func TestNewDynamoDBRepository(t *testing.T) {
-
-	r, err := NewDynamoDBRepository(DefaultLocalAWSClientConfig(), localTableName)
+	r := newDynamoDBRepository(t)
 
 	expType := &DynamoDBRepository{}
-	assert.NoError(t, err)
 	assert.IsType(t, expType, r)
 }
 
 func TestDynamoDBRepository_Store(t *testing.T) {
-	r, err := NewDynamoDBRepository(DefaultLocalAWSClientConfig(), localTableName)
-	assert.NoError(t, err)
+	r := newDynamoDBRepository(t)
 
 	id1 := testutils.NewID()
 	topic := testutils.NewUnique(testutils.Name(t))
@@ -39,13 +37,12 @@ func TestDynamoDBRepository_Store(t *testing.T) {
 		Level:           0,
 		FilteredPayload: payload,
 	}
-	err = r.Store(m)
+	err := r.Store(m)
 	assert.NoError(t, err)
 }
 
 func TestDynamoDBRepository_Fetch(t *testing.T) {
-	r, err := NewDynamoDBRepository(DefaultLocalAWSClientConfig(), localTableName)
-	assert.NoError(t, err)
+	r := newDynamoDBRepository(t)
 	id1 := testutils.NewID()
 
 	topic := testutils.NewUnique(testutils.Name(t))
@@ -60,7 +57,7 @@ func TestDynamoDBRepository_Fetch(t *testing.T) {
 		Level:           0,
 		FilteredPayload: payload,
 	}
-	err = r.Store(m)
+	err := r.Store(m)
 	assert.NoError(t, err)
 
 	time.Sleep(2 * time.Second)
@@ -68,4 +65,11 @@ func TestDynamoDBRepository_Fetch(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Len(t, msgs, 1)
+}
+
+func newDynamoDBRepository(t *testing.T) *DynamoDBRepository {
+	log := logging.NewSimpleLogger()
+	r, err := NewDynamoDBRepository(DefaultLocalAWSClientConfig(), localTableName, log)
+	assert.NoError(t, err)
+	return r
 }

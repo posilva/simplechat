@@ -15,6 +15,7 @@ import (
 type RedisPresence struct {
 	client   rueidis.Client
 	notifier ports.Notifier
+	log      ports.Logger
 }
 
 // DefaultLocalOpts returns default local options
@@ -23,7 +24,7 @@ func DefaultLocalOpts() rueidis.ClientOption {
 }
 
 // NewRedisPresence creates a new presence component using redis
-func NewRedisPresence(opts rueidis.ClientOption, n ports.Notifier) (*RedisPresence, error) {
+func NewRedisPresence(opts rueidis.ClientOption, n ports.Notifier, log ports.Logger) (*RedisPresence, error) {
 	client, err := rueidis.NewClient(opts)
 	if err != nil {
 		return nil, err
@@ -31,6 +32,7 @@ func NewRedisPresence(opts rueidis.ClientOption, n ports.Notifier) (*RedisPresen
 	return &RedisPresence{
 		client:   client,
 		notifier: n,
+		log:      log,
 	}, nil
 }
 
@@ -61,7 +63,6 @@ func (p *RedisPresence) Leave(ep ports.Endpoint) error {
 	if err != nil {
 		return fmt.Errorf("failed to leave: %v", err)
 	}
-	fmt.Println("Broadcast Leave: ", ep.ID(), ep.Room())
 	err = p.notifier.Broadcast(domain.Notication{
 		UUID: fmt.Sprintf("ep:%v:%v", ep.ID(), ep.Room()),
 		Kind: domain.PresenceLeaveKind,

@@ -71,3 +71,10 @@ type NotifierCodec interface {
 	Encode(domain.Notication) ([]byte, error)
 	Decode([]byte, *domain.Notication) error
 }
+
+// Logger defines a basic logger interface
+type Logger interface {
+	Debug(msg string, v ...interface{}) error
+	Info(msg string, v ...interface{}) error
+	Error(msg string, v ...interface{}) error
+}

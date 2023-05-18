@@ -3,21 +3,23 @@ package registry
 import (
 	"testing"
 
+	"github.com/posilva/simplechat/internal/adapters/output/logging"
 	"github.com/posilva/simplechat/internal/core/domain"
 	"github.com/posilva/simplechat/internal/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestInMemoryRegistry_New(t *testing.T) {
-
-	r := NewInMemoryRegistry()
+	log := logging.NewSimpleLogger()
+	r := NewInMemoryRegistry(log)
 	exp := &InMemoryRegistry{}
 	assert.NotNil(t, r)
 	assert.IsType(t, exp, r)
 }
 
 func TestInMemoryRegistry_Register(t *testing.T) {
-	r := NewInMemoryRegistry()
+	log := logging.NewSimpleLogger()
+	r := NewInMemoryRegistry(log)
 	assert.NotNil(t, r)
 
 	room := testutil.NewUnique(testutil.Name(t))
@@ -31,7 +33,8 @@ func TestInMemoryRegistry_Register(t *testing.T) {
 	assert.NoError(t, err)
 }
 func TestInMemoryRegistry_DeRegister(t *testing.T) {
-	r := NewInMemoryRegistry()
+	log := logging.NewSimpleLogger()
+	r := NewInMemoryRegistry(log)
 	assert.NotNil(t, r)
 
 	room := testutil.NewUnique(testutil.Name(t))
@@ -42,8 +45,10 @@ func TestInMemoryRegistry_DeRegister(t *testing.T) {
 	err = r.DeRegister(ep)
 	assert.NoError(t, err)
 }
+
 func TestInMemoryRegistry_Notify(t *testing.T) {
-	r := NewInMemoryRegistry()
+	log := logging.NewSimpleLogger()
+	r := NewInMemoryRegistry(log)
 	assert.NotNil(t, r)
 
 	room := testutil.NewUnique(testutil.Name(t))

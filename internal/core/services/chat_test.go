@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/posilva/simplechat/internal/adapters/output/logging"
 	"github.com/posilva/simplechat/internal/adapters/output/moderator"
 	"github.com/posilva/simplechat/internal/adapters/output/notifier"
 	"github.com/posilva/simplechat/internal/adapters/output/notifier/codecs"
@@ -44,8 +45,14 @@ func TestChatService_Send(t *testing.T) {
 	err = cs.Send(msg)
 	assert.NoError(t, err)
 
-	m1 := <-ep1.Channel()
-	m := m1.Payload.(domain.ModeratedMessage)
+	m1 := <-ep2.Channel()
+	_ = m1.Payload.(domain.PresenceUpdate)
+
+	m1 = <-ep2.Channel()
+	_ = m1.Payload.(domain.PresenceUpdate)
+
+	m2 := <-ep2.Channel()
+	m := m2.Payload.(domain.ModeratedMessage)
 	assert.Equal(t, msg, m.Message)
 }
 
@@ -93,18 +100,19 @@ func TestChatService_DeRegister(t *testing.T) {
 }
 
 func newChatService(t *testing.T) *ChatService {
-	r, err := repository.NewDynamoDBRepository(repository.DefaultLocalAWSClientConfig(), testutils.DynamoDBLocalTableName)
+	log := logging.NewSimpleLogger()
+	r, err := repository.NewDynamoDBRepository(repository.DefaultLocalAWSClientConfig(), testutils.DynamoDBLocalTableName, log)
 	assert.NoError(t, err)
 
-	reg := registry.NewInMemoryRegistry()
+	reg := registry.NewInMemoryRegistry(log)
 
-	n, err := notifier.NewRabbitMQNotifierWithLocal[*codecs.JSONNotifierCodec](testutils.RabbitMQLocalURL, reg)
+	n, err := notifier.NewRabbitMQNotifierWithLocal[*codecs.JSONNotifierCodec](testutils.RabbitMQLocalURL, reg, log)
 	assert.NoError(t, err)
 
 	m := moderator.NewIgnoreModerator()
-	ps, err := presence.NewRedisPresence(presence.DefaultLocalOpts(), n)
+	ps, err := presence.NewRedisPresence(presence.DefaultLocalOpts(), n, log)
 
-	cs := NewChatService(r, n, m, ps)
+	cs := NewChatService(r, n, m, ps, log)
 	assert.NoError(t, err)
 
 	assert.NotNil(t, cs)
