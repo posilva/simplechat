@@ -10,16 +10,19 @@ const (
 	MessageKind = 0
 	// ModeratedMessageKind is a moderated chat message
 	ModeratedMessageKind = 1
-	// PresenceUpdateKind is a join or leave message
-	PresenceUpdateKind = 2
+	// PresenceJoinKind is a join or leave message
+	PresenceJoinKind = 2
+	// PresenceLeaveKind is a join or leave message
+	PresenceLeaveKind = 3
 	// ChatHistoryKind is a list of messages from the chat
-	ChatHistoryKind = 3
+	ChatHistoryKind = 4
 	// PresenceListKind is a message with the room members presence
-	PresenceListKind = 4
+	PresenceListKind = 5
 )
 
 // Notication represents a general notification message
 type Notication struct {
+	UUID    string
 	Payload interface{}
 	To      string
 	Kind    NoticationKind

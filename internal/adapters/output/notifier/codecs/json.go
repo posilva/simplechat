@@ -31,7 +31,6 @@ func (c *JSONNotifierCodec) Decode(d []byte, n *domain.Notication) error {
 
 	switch n.Kind {
 	case domain.MessageKind:
-		fmt.Println(n.Kind)
 		var m domain.Message
 		err = json.Unmarshal(s, &m)
 		if err != nil {
@@ -47,7 +46,20 @@ func (c *JSONNotifierCodec) Decode(d []byte, n *domain.Notication) error {
 		}
 		n.Payload = m
 	case domain.PresenceListKind:
-	case domain.PresenceUpdateKind:
+	case domain.PresenceJoinKind:
+		var m domain.PresenceUpdate
+		err = json.Unmarshal(s, &m)
+		if err != nil {
+			return fmt.Errorf("failed to decode from json: %v", err)
+		}
+		n.Payload = m
+	case domain.PresenceLeaveKind:
+		var m domain.PresenceUpdate
+		err = json.Unmarshal(s, &m)
+		if err != nil {
+			return fmt.Errorf("failed to decode from json: %v", err)
+		}
+		n.Payload = m
 	default:
 		return fmt.Errorf("unknown kind notification: %v", n.Kind)
 	}

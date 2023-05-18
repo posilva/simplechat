@@ -83,9 +83,10 @@ func (n *RabbitMQNotifier[T]) Broadcast(m domain.Notication) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
+	fmt.Println("Broadcast", t, m.UUID, n.subscriptions[t])
 	if _, ok := n.subscriptions[t]; ok {
+		fmt.Println("Broadcast 2", t, m.UUID)
 		body, err := n.codec.Encode(m)
-
 		if err != nil {
 			return fmt.Errorf("failed to parse json: %s", err)
 		}
@@ -170,12 +171,13 @@ func (n *RabbitMQNotifier[T]) createSubscription(queue string, r ports.Receiver)
 		for d := range msgs {
 
 			m := domain.Notication{}
-
 			err := n.codec.Decode(d.Body, &m)
 			if err != nil {
 				// TODO add logger
+				fmt.Printf("failed to decode message: %v", m)
 				continue
 			}
+
 			n.registry.Notify(m)
 		}
 	}()

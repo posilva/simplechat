@@ -33,10 +33,34 @@
         var iso = new Date().toISOString();
         return iso.split("T")[1].split(".")[0];
       };
-
       ws.onmessage = function (msg) {
+        
+        var line = ""
         x = JSON.parse(msg.data);
-        var line =  now() + " " + x.From + " > " + x.Payload + "\n";
+        console.log(x)
+        switch(x.Kind) {
+          case 0:
+            break;
+          case 1:
+          line =  now() + " " + x.Payload.From + " > " + x.Payload.Payload + "\n";
+            break;
+          case 2:
+          line =  now() + " " + x.Payload.ID + " > Joined \n"
+            break;
+          case 3:
+          line =  now() + " " + x.Payload.ID + " > Left \n"
+            break;
+          case 4:
+          line =  now() + " History message received \n"
+            break;
+          case 5:
+          line =  now() + " Presence List message received \n"
+            break;
+          default:
+            // code block
+        }
+        
+        
         chat.innerText += line;
       };
 

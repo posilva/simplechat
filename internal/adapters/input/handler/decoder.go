@@ -13,5 +13,5 @@ func decode(data []byte) (domain.Message, error) {
 }
 
 func encode(m domain.Notication) ([]byte, error) {
-	return json.Marshal(&m.Payload)
+	return json.Marshal(&m)
 }

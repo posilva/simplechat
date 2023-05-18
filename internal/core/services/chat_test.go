@@ -102,8 +102,7 @@ func newChatService(t *testing.T) *ChatService {
 	assert.NoError(t, err)
 
 	m := moderator.NewIgnoreModerator()
-
-	ps, err := presence.NewRedisPresence(presence.DefaultLocalOpts())
+	ps, err := presence.NewRedisPresence(presence.DefaultLocalOpts(), n)
 
 	cs := NewChatService(r, n, m, ps)
 	assert.NoError(t, err)

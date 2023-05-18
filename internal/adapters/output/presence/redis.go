@@ -6,15 +6,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/posilva/simplechat/internal/core/domain"
 	"github.com/posilva/simplechat/internal/core/ports"
 	"github.com/redis/rueidis"
 )
 
 // RedisPresence component
 type RedisPresence struct {
-	client rueidis.Client
-	// TODO add a reference to a notifier to allow to notify groups of join and leave events
-
+	client   rueidis.Client
+	notifier ports.Notifier
 }
 
 // DefaultLocalOpts returns default local options
@@ -23,13 +23,14 @@ func DefaultLocalOpts() rueidis.ClientOption {
 }
 
 // NewRedisPresence creates a new presence component using redis
-func NewRedisPresence(opts rueidis.ClientOption) (*RedisPresence, error) {
+func NewRedisPresence(opts rueidis.ClientOption, n ports.Notifier) (*RedisPresence, error) {
 	client, err := rueidis.NewClient(opts)
 	if err != nil {
 		return nil, err
 	}
 	return &RedisPresence{
-		client: client,
+		client:   client,
+		notifier: n,
 	}, nil
 }
 
@@ -37,9 +38,20 @@ func NewRedisPresence(opts rueidis.ClientOption) (*RedisPresence, error) {
 func (p *RedisPresence) Join(ep ports.Endpoint) error {
 	err := p.doJoin(ep)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to join: %v", err)
 	}
-
+	err = p.notifier.Broadcast(domain.Notication{
+		Kind: domain.PresenceJoinKind,
+		To:   ep.Room(),
+		Payload: domain.PresenceUpdate{
+			ID:        ep.ID(),
+			Action:    domain.PresenceUpdateJoinAction,
+			Timestamp: uint64(time.Now().Unix()),
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to broadcast join update: %v", err)
+	}
 	return nil
 }
 
@@ -47,7 +59,20 @@ func (p *RedisPresence) Join(ep ports.Endpoint) error {
 func (p *RedisPresence) Leave(ep ports.Endpoint) error {
 	err := p.doLeave(ep)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to leave: %v", err)
+	}
+	fmt.Println("Broadcast Leave: ", ep.ID(), ep.Room())
+	err = p.notifier.Broadcast(domain.Notication{
+		UUID: fmt.Sprintf("ep:%v:%v", ep.ID(), ep.Room()),
+		Kind: domain.PresenceLeaveKind,
+		Payload: domain.PresenceUpdate{
+			ID:        ep.ID(),
+			Action:    domain.PresenceUpdateLeaveAction,
+			Timestamp: uint64(time.Now().Unix()),
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to broadcast join update: %v", err)
 	}
 	return nil
 }

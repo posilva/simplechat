@@ -62,7 +62,7 @@ func createChat() (*services.ChatService, error) {
 	}
 	mod := moderator.NewIgnoreModerator()
 
-	ps, err := presence.NewRedisPresence(presence.DefaultLocalOpts())
+	ps, err := presence.NewRedisPresence(presence.DefaultLocalOpts(), notif)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create presence: %v", err)
 	}
