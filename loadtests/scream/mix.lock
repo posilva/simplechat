@@ -1,0 +1,9 @@
+%{
+  "elixir_uuid": {:hex, :elixir_uuid, "1.2.1", "dce506597acb7e6b0daeaff52ff6a9043f5919a4c3315abb4143f0b00378c097", [:mix], [], "hexpm", "f7eba2ea6c3555cea09706492716b0d87397b88946e6380898c2889d68585752"},
+  "hpax": {:hex, :hpax, "0.1.2", "09a75600d9d8bbd064cdd741f21fc06fc1f4cf3d0fcc335e5aa19be1a7235c84", [:mix], [], "hexpm", "2c87843d5a23f5f16748ebe77969880e29809580efdaccd615cd3bed628a8c13"},
+  "jason": {:hex, :jason, "1.4.0", "e855647bc964a44e2f67df589ccf49105ae039d4179db7f6271dfd3843dc27e6", [:mix], [{:decimal, "~> 1.0 or ~> 2.0", [hex: :decimal, repo: "hexpm", optional: true]}], "hexpm", "79a3791085b2a0f743ca04cec0f7be26443738779d09302e01318f97bdb82121"},
+  "machinery": {:hex, :machinery, "1.1.0", "799c1061fe6cb3d32f03d48721607c14b152bc002fde600818f9eab4ef42bcca", [:mix], [], "hexpm", "ba3b41f607211a7433c5546446dc3a58e8a7b3cde7d7d364de3936ff01964188"},
+  "machinist": {:hex, :machinist, "2.1.2", "e555fd66cd10084959a5d985963dac66313adfc778a3a7ba69a50356de6b1734", [:mix], [], "hexpm", "8350372c5b7794476a516438560751470e02c509690d53c8be7b4719621a58bb"},
+  "mint": {:hex, :mint, "1.5.1", "8db5239e56738552d85af398798c80648db0e90f343c8469f6c6d8898944fb6f", [:mix], [{:castore, "~> 0.1.0 or ~> 1.0", [hex: :castore, repo: "hexpm", optional: true]}, {:hpax, "~> 0.1.1", [hex: :hpax, repo: "hexpm", optional: false]}], "hexpm", "4a63e1e76a7c3956abd2c72f370a0d0aecddc3976dea5c27eccbecfa5e7d5b1e"},
+  "mint_web_socket": {:hex, :mint_web_socket, "1.0.3", "aab42fff792a74649916236d0b01f560a0b3f03ca5dea693c230d1c44736b50e", [:mix], [{:mint, ">= 1.4.0", [hex: :mint, repo: "hexpm", optional: false]}], "hexpm", "ca3810ca44cc8532e3dce499cc17f958596695d226bb578b2fbb88c09b5954b0"},
+}
