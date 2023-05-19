@@ -202,7 +202,7 @@ defmodule Scream.ChatBot do
         %{state | closing?: true}
 
       {:text, _text}, state ->
-        #Logger.debug("Received: #{inspect(text)}, sending back the reverse")
+        # Logger.debug("Received: #{inspect(text)}, sending back the reverse")
         # {:ok, state} = send_frame(state, {:text, text})
         state
 
