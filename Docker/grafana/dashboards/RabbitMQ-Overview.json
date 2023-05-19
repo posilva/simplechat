@@ -8095,7 +8095,7 @@
       "type": "timeseries"
     }
   ],
-  "refresh": "15s",
+  "refresh": "5s",
   "schemaVersion": 34,
   "style": "dark",
   "tags": [
@@ -8182,6 +8182,9 @@
   },
   "timepicker": {
     "refresh_intervals": [
+      "1s",
+      "2s",
+      "5s",
       "15s",
       "30s",
       "1m",
