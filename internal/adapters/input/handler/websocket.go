@@ -61,19 +61,19 @@ func (h *WebSockerHandler) Handle(ctx *gin.Context) {
 		for {
 			_, b, err := ws.ReadMessage()
 			if err != nil {
-				_, _ = fmt.Printf("failed to read message from socket: %v", err)
+				_, _ = fmt.Printf("failed to read message from socket: %v\n", err)
 				break
 			}
 
 			m, err := decode(b)
 			if err != nil {
-				_, _ = fmt.Printf("failed to decode message: %v", err)
+				_, _ = fmt.Printf("failed to decode message: [%v]: %v\n", err, string(b))
 				break
 			}
 
 			err = h.chat.Send(m)
 			if err != nil {
-				_, _ = fmt.Printf("failed to send message to chat service: %v", err)
+				_, _ = fmt.Printf("failed to send message to chat service: %v\n", err)
 				break
 			}
 
