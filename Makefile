@@ -13,7 +13,7 @@ infra-down:
 	cd Docker && docker-compose -f docker-compose.yaml down 
 
 infra-test:
-	sleep 5 && aws --region us-east-1 dynamodb list-tables --endpoint-url http://localhost:4566 --no-cli-pager
+	sleep 5 && aws --region eu-east-1 dynamodb list-tables --endpoint-url http://localhost:4566 --no-cli-pager
 
 infra-local:
 	cd terraform && \

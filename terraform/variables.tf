@@ -3,13 +3,13 @@
 variable "region" {
   type        = string
   description = "AWS region"
-  default     = "us-east-1"
+  default     = "eu-west-1"
 }
 
 variable "namespace" {
   type        = string
   description = "Namespace (e.g. `local`)"
-  default     = "local"
+  default     = "pms"
 }
 
 variable "stage" {
@@ -28,20 +28,14 @@ variable "environment" {
 variable "service_name" {
   type        = string
   description = "Service name"
-  default     = "simple_chat"
+  default     = "simplechat01"
 }
 
 # services's port (as exposed in the container)
 variable "service_port" {
   type        = number
   description = "Service port"
-  default     = 18808
-}
-
-variable "aws_account_id" {
-  type        = string
-  description = "AWS account ID"
-  default     = "123456789012"
+  default     = 8081
 }
 
 # DynamoDB
