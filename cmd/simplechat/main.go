@@ -39,13 +39,13 @@ func main() {
 
 	chat, err := createChat()
 	if err != nil {
-		panic(fmt.Errorf("failed to create chat: %v", chat))
+		panic(fmt.Errorf("failed to create chat: %v", err))
 	}
 
 	wsHandler := handler.NewWebSockerHandler(chat)
 	r.GET("/ws", wsHandler.Handle)
 
-	err = r.Run(":8081")
+	err = r.Run("0.0.0.0:8081")
 	if err != nil {
 		panic(fmt.Errorf("failed to start the server %v", err))
 	}

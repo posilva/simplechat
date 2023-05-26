@@ -40,3 +40,9 @@ run: fmt lint
 	go run ./cmd/simplechat/main.go
 
 setup:  infra-upd infra-local run 
+
+docker-build:
+	docker buildx build --no-cache --load --platform linux/arm64 -t simplechat --progress plain  .
+
+docker-run:
+	docker run -d  -it simplechat  
