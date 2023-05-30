@@ -1,3 +1,9 @@
+resource "aws_s3_bucket" "deploy" {
+  bucket = "${local.name}-deploy"
+  acl    = "private"
+  tags   = local.tags
+}
+
 data "aws_iam_policy_document" "cd_assume_role" {
   statement {
     effect = "Allow"

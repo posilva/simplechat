@@ -1,0 +1,12 @@
+version: 0.0
+os: linux
+files:
+ - source: scream
+   destination: /opt/scream
+hooks:
+  ApplicationStart:
+    - location: scripts/start.sh
+      timeout: 3600
+  ValidateService:
+    - location: scripts/check.sh
+      timeout: 3600
