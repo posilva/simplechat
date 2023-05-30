@@ -1,4 +1,4 @@
-FROM amazonlinux:2023.0.20230503.0
+FROM public.ecr.aws/amazonlinux/amazonlinux:2.0.20230515.0-arm64v8
 
 ENV OTP_VERSION="26.0" \
     REBAR3_VERSION="3.20.0"
@@ -7,8 +7,8 @@ ENV OTP_DOWNLOAD_URL="https://github.com/erlang/otp/archive/OTP-${OTP_VERSION}.t
 
 LABEL org.opencontainers.image.version=$OTP_VERSION
 
-# docker buildx build  --load --platform linux/arm64 -t posilva/amz2-2023.0.20230503.0-elixir-v1.14.5-otp-26.0:latest  --progress plain  -f Dockerfile .
-# docker run -it posilva/amz2-2023.0.20230503.0-elixir-v1.14.5-otp-26.0:latest 
+# docker buildx build  --load --platform linux/arm64 -t posilva/amz2-2023.0.20230515.0-elixir-v1.14.5-otp-26.0:latest  --progress plain  -f Dockerfile .
+# docker run -it posilva/amz2-2023.0.20230515.0-elixir-v1.14.5-otp-26.0:latest 
 
 WORKDIR /opt/
 

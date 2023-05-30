@@ -170,7 +170,7 @@ resource "aws_autoscaling_group" "screamer" {
 
   tag {
     key                 = "version"
-    value               = "2.2"
+    value               = "2.3"
     propagate_at_launch = true
   }
   tag {
