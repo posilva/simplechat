@@ -35,8 +35,8 @@ defmodule Scream.MixProject do
     [
       scream: [
         include_executables_for: [:unix],
-        applications: [runtime_tools: :permanent],
-        include_erts: true
+        applications: [runtime_tools: :permanent, crypto: :permanent],
+        include_erts: false
       ]
     ]
   end

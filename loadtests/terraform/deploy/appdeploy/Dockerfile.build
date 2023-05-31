@@ -1,0 +1,28 @@
+FROM public.ecr.aws/amazonlinux/amazonlinux:2.0.20230515.0-arm64v8
+
+WORKDIR /opt/
+# docker buildx build  --load --platform linux/arm64 -t posilva/amz2-2023.0.20230515.0-elixir-v1.14.5-otp-26.0:latest  --progress plain  -f Dockerfile .
+# docker run -it posilva/amz2-2023.0.20230515.0-elixir-v1.14.5-otp-26.0:latest 
+
+RUN yum update && yum -y install git openssl-devel make automake autoconf ncurses-devel gcc tar  gcc-c++  libxslt unzip procps
+RUN git clone https://github.com/asdf-vm/asdf.git ${HOME}/.asdf --branch v0.11.3 \
+    && source ${HOME}/.asdf/asdf.sh \
+    && curl -fSL -o /opt/kerl  https://raw.githubusercontent.com/kerl/kerl/master/kerl \
+    && chmod +x /opt/kerl \    
+    && export KERL_CONFIGURE_OPTIONS="--disable-debug --without-javac --without-odbc  -enable-threads --enable-kernel-poll --without-wx" \
+    && mkdir -p /opt/erlang/26.0 \
+    && /opt/kerl build 26.0 26.0 \
+    && /opt/kerl install 26.0 /opt/erlang/26.0 \
+    && source /opt/erlang/26.0/activate \
+    && export LC_ALL=en_US.UTF-8 \
+    && asdf plugin add elixir \
+    && asdf install elixir 1.14.5-otp-26
+
+
+COPY ./scream /opt/scream
+
+CMD [ "/bin/bash" ]
+
+
+
+
